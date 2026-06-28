@@ -293,7 +293,41 @@
             <input type="number" name="price" placeholder="10000" min="1000" step="1000" required inputmode="numeric">
             <span>원</span>
           </div>
+          <p class="form-hint">플랫폼 수수료 5% 차감 후 판매 대금이 정산됩니다. (1만원 → 9,500원)</p>
         </label>
+
+        <div class="account-section" id="uploadAccountSection">
+          <p class="account-section-title">정산 계좌</p>
+          <p class="account-section-desc">판매 대금을 받을 계좌입니다. 작품 등록 시 저장됩니다.</p>
+          <label class="form-field">
+            <span class="form-label">은행</span>
+            <select name="uploadBankName" required>
+              <option value="">은행을 선택하세요</option>
+              <option value="KB국민">KB국민</option>
+              <option value="신한">신한</option>
+              <option value="우리">우리</option>
+              <option value="하나">하나</option>
+              <option value="NH농협">NH농협</option>
+              <option value="IBK기업">IBK기업</option>
+              <option value="카카오뱅크">카카오뱅크</option>
+              <option value="토스뱅크">토스뱅크</option>
+              <option value="케이뱅크">케이뱅크</option>
+              <option value="SC제일">SC제일</option>
+              <option value="씨티">씨티</option>
+              <option value="새마을">새마을</option>
+              <option value="우체국">우체국</option>
+              <option value="기타">기타</option>
+            </select>
+          </label>
+          <label class="form-field">
+            <span class="form-label">계좌번호</span>
+            <input type="text" name="uploadAccountNumber" placeholder="숫자만 입력" inputmode="numeric" maxlength="20" required autocomplete="off">
+          </label>
+          <label class="form-field">
+            <span class="form-label">예금주</span>
+            <input type="text" name="uploadAccountHolder" placeholder="계좌 예금주 이름" maxlength="20" required autocomplete="name">
+          </label>
+        </div>
 
         <button type="submit" class="btn btn-primary btn-full">업로드하기</button>
       </form>
@@ -302,6 +336,7 @@
 
   <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
+  <script src="js/platform-config.js"></script>
   <script src="js/shared.js"></script>
   <script src="js/main.js"></script>
 </body>

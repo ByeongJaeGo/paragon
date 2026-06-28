@@ -144,6 +144,14 @@ function resetUploadForm() {
 
   uploadForm.querySelector('input[name="uploadType"][value="midi"]').checked = true;
   switchUploadPanel('midi');
+  fillUploadAccountFields(getProfile());
+}
+
+function fillUploadAccountFields(profile) {
+  if (!uploadForm.uploadBankName) return;
+  uploadForm.uploadBankName.value = profile?.bankAccount?.bankName || '';
+  uploadForm.uploadAccountNumber.value = profile?.bankAccount?.accountNumber || '';
+  uploadForm.uploadAccountHolder.value = profile?.bankAccount?.accountHolder || '';
 }
 
 function openUploadModal() {
@@ -221,6 +229,10 @@ function createWorkCard(work, mode) {
 
   if (isSold && work.buyer) {
     body += `<p class="meta buyer-info">구매자 · ${escapeHtml(work.buyer)}</p>`;
+  }
+
+  if (isSold && work.settlement && profile?.nickname === work.seller) {
+    body += `<p class="meta settlement-info">정산 · ${formatPrice(work.settlement.sellerPayout)} (수수료 ${formatPrice(work.settlement.platformFee)})</p>`;
   }
 
   body += `<p class="date">${formatDate(work.createdAt)}</p>`;
@@ -378,6 +390,11 @@ function renderUI() {
     profileCard.innerHTML = `
       <p><strong>${escapeHtml(profile.nickname)}</strong> · ${escapeHtml(profile.genre)}</p>
       <p class="profile-roles">${escapeHtml(getRolesLabel(profile.roles))}</p>
+      ${hasSellerAccount(profile)
+        ? `<p class="profile-account">정산 계좌 · ${escapeHtml(formatMaskedAccount(profile.bankAccount))}</p>`
+        : isSeller(profile.roles)
+          ? '<p class="profile-account">정산 계좌 · 작품 등록 시 입력</p>'
+          : ''}
       <p class="profile-hint">${hints.join(' ')}</p>
     `;
     uploadBtn.classList.remove('hidden');
@@ -427,6 +444,10 @@ uploadBtn.addEventListener('click', openUploadModal);
 uploadBtnHero.addEventListener('click', openUploadModal);
 profileModalClose.addEventListener('click', closeProfileModal);
 uploadModalClose.addEventListener('click', closeUploadModal);
+
+uploadForm.uploadAccountNumber?.addEventListener('input', () => {
+  uploadForm.uploadAccountNumber.value = uploadForm.uploadAccountNumber.value.replace(/\D/g, '');
+});
 
 uploadForm.querySelectorAll('input[name="uploadType"]').forEach((radio) => {
   radio.addEventListener('change', () => switchUploadPanel(radio.value));
@@ -485,6 +506,19 @@ uploadForm.addEventListener('submit', async (e) => {
 
   const profile = getProfile();
   if (!profile) return;
+
+  const bankAccount = normalizeBankAccount({
+    bankName: uploadForm.uploadBankName.value,
+    accountNumber: uploadForm.uploadAccountNumber.value,
+    accountHolder: uploadForm.uploadAccountHolder.value,
+  });
+  const bankError = validateBankAccount(bankAccount);
+  if (bankError) {
+    alert(bankError);
+    return;
+  }
+
+  saveProfile({ ...profile, bankAccount, updatedAt: new Date().toISOString() });
 
   const type = uploadForm.uploadType.value;
   const config = UPLOAD_TYPES[type];
@@ -576,7 +610,8 @@ const purchasedId = new URLSearchParams(window.location.search).get('purchased')
 if (purchasedId) {
   const purchased = findWork(purchasedId);
   if (purchased) {
-    showToast(`"${purchased.title}" 구매가 완료되었습니다.`);
+    const settlement = purchased.settlement || calculatePurchaseBreakdown(purchased.price);
+    showToast(`"${purchased.title}" 구매 완료 · ${formatPrice(settlement.total)} (수수료 ${formatPrice(settlement.platformFee)})`);
   }
   window.history.replaceState({}, '', 'index.html');
 }

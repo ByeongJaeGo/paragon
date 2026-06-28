@@ -33,7 +33,7 @@
     <section class="page-card" id="paymentCard">
       <p class="page-tag">결제</p>
       <h1>작품 구매</h1>
-      <p class="page-desc">안전 결제 페이지입니다. (HTML 데모)</p>
+      <p class="page-desc">안전 결제 페이지입니다. 작품 가격의 5%가 PARAGON 플랫폼 수수료로 정산됩니다.</p>
 
       <div class="order-summary" id="orderSummary"></div>
 
@@ -43,6 +43,10 @@
           <input type="text" name="buyerName" placeholder="이름 또는 닉네임" required>
         </label>
         <label class="form-field">
+          <span class="form-label">연락처</span>
+          <input type="tel" name="buyerContact" placeholder="010-0000-0000" required inputmode="tel">
+        </label>
+        <label class="form-field">
           <span class="form-label">결제 수단</span>
           <select name="payMethod" required>
             <option value="card">신용·체크카드</option>
@@ -50,10 +54,19 @@
             <option value="bank">계좌이체</option>
           </select>
         </label>
-        <label class="form-field">
-          <span class="form-label">카드번호 <span class="form-optional">(데모)</span></span>
-          <input type="text" name="cardNumber" placeholder="0000-0000-0000-0000" inputmode="numeric">
-        </label>
+        <div class="payment-panel" data-pay-panel="card">
+          <label class="form-field">
+            <span class="form-label">카드번호 <span class="form-optional">(데모)</span></span>
+            <input type="text" name="cardNumber" placeholder="0000-0000-0000-0000" inputmode="numeric" maxlength="19">
+          </label>
+        </div>
+        <div class="payment-panel hidden" data-pay-panel="bank">
+          <label class="form-field">
+            <span class="form-label">입금자명</span>
+            <input type="text" name="depositorName" placeholder="송금할 때 표시될 이름">
+          </label>
+          <p class="form-hint">계좌이체 선택 시 입금 확인에 사용됩니다.</p>
+        </div>
         <button type="submit" class="btn btn-primary btn-full" id="payBtn">결제하기</button>
       </form>
     </section>
@@ -69,6 +82,7 @@
     </div>
   </footer>
 
+  <script src="js/platform-config.js"></script>
   <script src="js/shared.js"></script>
   <script src="js/payment.js"></script>
 </body>

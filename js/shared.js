@@ -74,6 +74,36 @@ function formatMaskedAccount(account) {
   return `${account.bankName} · ${'*'.repeat(Math.max(digits.length - 4, 4))}${tail} · ${account.accountHolder}`;
 }
 
+function validateBankAccount(raw) {
+  const account = normalizeBankAccount(raw);
+  if (!account?.bankName) return '은행을 선택해 주세요.';
+  if (!account.accountNumber || account.accountNumber.length < 10) {
+    return '계좌번호를 10자리 이상 입력해 주세요.';
+  }
+  if (!account.accountHolder) return '예금주 이름을 입력해 주세요.';
+  return null;
+}
+
+function normalizeBuyerPayment(raw) {
+  if (!raw?.contact && !raw?.cardNumber && !raw?.depositorName) return null;
+  return {
+    payMethod: raw.payMethod || 'card',
+    contact: raw.contact?.trim() || '',
+    cardNumber: String(raw.cardNumber || '').replace(/\D/g, ''),
+    depositorName: raw.depositorName?.trim() || '',
+  };
+}
+
+function validateBuyerPayment(payment, payMethod) {
+  if (!payment?.contact) return '연락처를 입력해 주세요.';
+  if (payMethod === 'bank') {
+    if (!payment.depositorName) return '입금자명을 입력해 주세요.';
+  } else if (!payment.cardNumber || payment.cardNumber.length < 12) {
+    return '카드번호를 입력해 주세요. (데모 12자리 이상)';
+  }
+  return null;
+}
+
 function normalizeProfile(raw) {
   if (!raw) return null;
 
@@ -85,6 +115,9 @@ function normalizeProfile(raw) {
 
   if (profile.bankAccount) {
     profile = { ...profile, bankAccount: normalizeBankAccount(profile.bankAccount) };
+  }
+  if (profile.buyerPayment) {
+    profile = { ...profile, buyerPayment: normalizeBuyerPayment(profile.buyerPayment) };
   }
 
   return profile;
@@ -135,6 +168,8 @@ function getSampleWorks() {
     ...work,
     status: statusMap[work.id]?.status || work.status,
     buyer: statusMap[work.id]?.buyer || null,
+    soldAt: statusMap[work.id]?.soldAt || null,
+    settlement: statusMap[work.id]?.settlement || null,
   }));
 }
 
@@ -270,6 +305,75 @@ function formatPrice(price) {
   return `${Number(price).toLocaleString('ko-KR')}원`;
 }
 
+function getPlatformFeeRate() {
+  return typeof PARAGON_PLATFORM !== 'undefined' && PARAGON_PLATFORM.feeRate != null
+    ? PARAGON_PLATFORM.feeRate
+    : 0.05;
+}
+
+function getPlatformFeeLabel() {
+  return `${Math.round(getPlatformFeeRate() * 100)}%`;
+}
+
+function getPlatformAccount() {
+  if (typeof PARAGON_PLATFORM === 'undefined') return null;
+  return normalizeBankAccount(PARAGON_PLATFORM.account);
+}
+
+function hasPlatformAccount() {
+  const account = getPlatformAccount();
+  return Boolean(account?.bankName && account?.accountNumber && account?.accountHolder);
+}
+
+function formatPlatformAccountDisplay() {
+  const account = getPlatformAccount();
+  if (!hasPlatformAccount()) return '운영 계좌 미설정 (js/platform-config.js)';
+  return `${account.bankName} ${account.accountNumber} · ${account.accountHolder}`;
+}
+
+function calculatePurchaseBreakdown(price) {
+  const total = Math.round(Number(price) || 0);
+  const platformFee = Math.round(total * getPlatformFeeRate());
+  const sellerPayout = total - platformFee;
+  return {
+    total,
+    platformFee,
+    sellerPayout,
+    feeRate: getPlatformFeeRate(),
+  };
+}
+
+function buildPaymentSummaryHtml(work) {
+  const breakdown = calculatePurchaseBreakdown(work.price);
+  const feeLabel = getPlatformFeeLabel();
+
+  let html = `
+    <div class="order-row"><span>작품</span><strong>${escapeHtml(work.title)}</strong></div>
+    <div class="order-row"><span>유형</span><strong>${getCategoryLabel(work)}</strong></div>
+    <div class="order-row"><span>판매자</span><strong>${escapeHtml(work.seller)}</strong></div>
+    <div class="order-row"><span>작품 가격</span><strong>${formatPrice(breakdown.total)}</strong></div>
+    <div class="order-row order-fee"><span>플랫폼 수수료 (${feeLabel})</span><strong>${formatPrice(breakdown.platformFee)}</strong></div>
+    <div class="order-row"><span>판매자 정산</span><strong>${formatPrice(breakdown.sellerPayout)}</strong></div>
+    <div class="order-row order-total"><span>결제 금액</span><strong>${formatPrice(breakdown.total)}</strong></div>
+  `;
+
+  if (hasPlatformAccount()) {
+    html += `
+      <div class="platform-settlement">
+        <p class="platform-settlement-title">PARAGON 수수료 정산 계좌</p>
+        <p class="platform-settlement-account">${escapeHtml(formatPlatformAccountDisplay())}</p>
+        <p class="form-hint">결제 금액 ${formatPrice(breakdown.total)} 중 수수료 ${formatPrice(breakdown.platformFee)}는 위 운영 계좌로, ${formatPrice(breakdown.sellerPayout)}는 판매자 계좌로 정산됩니다.</p>
+      </div>
+    `;
+  } else {
+    html += `
+      <p class="form-hint order-fee-note">플랫폼 수수료 ${feeLabel}(${formatPrice(breakdown.platformFee)})가 판매 대금에서 차감됩니다.</p>
+    `;
+  }
+
+  return html;
+}
+
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -307,11 +411,18 @@ function completePurchase(workId, buyerName) {
   const work = findWork(workId);
   if (!work || work.status === 'sold') return false;
 
+  const settlement = calculatePurchaseBreakdown(work.price);
+
   if (work.isSample) {
     const statusMap = getSampleStatus();
-    statusMap[work.id] = { status: 'sold', buyer: buyerName };
+    statusMap[work.id] = {
+      status: 'sold',
+      buyer: buyerName,
+      soldAt: new Date().toISOString(),
+      settlement,
+    };
     saveSampleStatus(statusMap);
-    return true;
+    return settlement;
   }
 
   const works = getWorks();
@@ -320,8 +431,9 @@ function completePurchase(workId, buyerName) {
   target.status = 'sold';
   target.buyer = buyerName;
   target.soldAt = new Date().toISOString();
+  target.settlement = settlement;
   saveWorks(works);
-  return true;
+  return settlement;
 }
 
 function matchesWorkSearch(work, query) {

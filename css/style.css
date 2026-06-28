@@ -763,6 +763,38 @@ a {
   border-top: 1px solid var(--border);
 }
 
+.order-fee strong {
+  color: var(--accent);
+}
+
+.order-fee-note {
+  margin: 0.75rem 0 0;
+}
+
+.platform-settlement {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border);
+}
+
+.platform-settlement-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.platform-settlement-account {
+  margin: 0 0 0.5rem;
+  font-size: 0.92rem;
+  color: var(--accent);
+  word-break: break-all;
+}
+
+.settlement-info {
+  color: var(--accent);
+}
+
 .order-total strong {
   color: var(--accent);
   font-size: 1.1rem;
@@ -1206,6 +1238,17 @@ fieldset legend {
   color: var(--text-muted);
   font-size: 0.85rem;
   line-height: 1.5;
+}
+
+.payment-panel.hidden {
+  display: none;
+}
+
+.form-hint {
+  margin: -0.35rem 0 0.75rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.45;
 }
 
 .profile-account {
