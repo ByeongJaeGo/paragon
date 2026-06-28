@@ -1065,6 +1065,38 @@ a {
   font-size: 0.85rem;
 }
 
+.blog-list-item {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.blog-list-item h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.blog-list-item h2 a {
+  color: var(--text);
+}
+
+.blog-list-item h2 a:hover {
+  color: var(--accent);
+}
+
+.blog-list-item p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.blog-cta {
+  margin-top: 1.5rem;
+}
+
+.legal-page ol {
+  padding-left: 1.25rem;
+  margin: 0.5rem 0 1rem;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
