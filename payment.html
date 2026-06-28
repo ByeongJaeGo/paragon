@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PARAGON — 결제</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="header">
+    <nav class="nav container">
+      <a href="index.html" class="logo">PARAGON</a>
+      <a href="index.html" class="btn btn-ghost">마켓으로</a>
+    </nav>
+  </header>
+
+  <main class="container page-main">
+    <section class="page-card" id="paymentCard">
+      <p class="page-tag">결제</p>
+      <h1>작품 구매</h1>
+      <p class="page-desc">안전 결제 페이지입니다. (HTML 데모)</p>
+
+      <div class="order-summary" id="orderSummary"></div>
+
+      <form class="modal-form" id="paymentForm">
+        <label class="form-field">
+          <span class="form-label">구매자 이름</span>
+          <input type="text" name="buyerName" placeholder="이름 또는 닉네임" required>
+        </label>
+        <label class="form-field">
+          <span class="form-label">결제 수단</span>
+          <select name="payMethod" required>
+            <option value="card">신용·체크카드</option>
+            <option value="kakao">카카오페이</option>
+            <option value="bank">계좌이체</option>
+          </select>
+        </label>
+        <label class="form-field">
+          <span class="form-label">카드번호 <span class="form-optional">(데모)</span></span>
+          <input type="text" name="cardNumber" placeholder="0000-0000-0000-0000" inputmode="numeric">
+        </label>
+        <button type="submit" class="btn btn-primary btn-full" id="payBtn">결제하기</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="js/shared.js"></script>
+  <script src="js/payment.js"></script>
+</body>
+</html>

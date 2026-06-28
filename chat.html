@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PARAGON — 채팅</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="chat-page">
+  <header class="header">
+    <nav class="nav container">
+      <a href="index.html" class="logo">PARAGON</a>
+      <a href="index.html" class="btn btn-ghost">마켓으로</a>
+    </nav>
+  </header>
+
+  <main class="container chat-layout">
+    <section class="chat-header" id="chatHeader"></section>
+    <section class="chat-messages" id="chatMessages" aria-live="polite"></section>
+    <form class="chat-form" id="chatForm">
+      <input type="text" name="message" placeholder="메시지를 입력하세요" required autocomplete="off">
+      <button type="submit" class="btn btn-primary">전송</button>
+    </form>
+  </main>
+
+  <script src="js/shared.js"></script>
+  <script src="js/chat.js"></script>
+</body>
+</html>

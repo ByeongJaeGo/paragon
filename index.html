@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="작곡·작사 작품을 팔고, 가수와 뮤지션이 구매하는 마켓">
+  <title>PARAGON — 음악 작품 마켓</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Playfair+Display:ital,wght@0,700;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="header">
+    <nav class="nav container">
+      <a href="#" class="logo">PARAGON</a>
+      <div class="nav-actions">
+        <button class="btn btn-ghost" id="profileBtn" type="button">프로필</button>
+        <button class="btn btn-primary hidden" id="uploadBtn" type="button">작품 올리기</button>
+      </div>
+    </nav>
+  </header>
+
+  <div class="profile-alert" id="profileAlert" hidden>
+    <div class="profile-alert-inner container">
+      <span class="profile-alert-icon" aria-hidden="true">!</span>
+      <div class="profile-alert-copy">
+        <strong>먼저 프로필을 만들어 주세요</strong>
+        <p>닉네임, 장르, 역할을 입력해야 작품을 올릴 수 있습니다.</p>
+      </div>
+      <button type="button" class="btn btn-primary" id="profileAlertBtn">프로필 만들기</button>
+    </div>
+  </div>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-tags">
+        <span class="hero-tag">숨겨진 재능, 세상 밖으로</span>
+        <span class="hero-tag-dot" aria-hidden="true">·</span>
+        <span class="hero-tag">안좋은 예술작품은 없다.</span>
+      </div>
+      <p class="hero-subline hero-subline-featured" aria-label="기획사나 회사에 컨택받지 못했더라도 세상에 내놓을 수 있다.">
+        <span class="hero-subline-bar" aria-hidden="true"></span>
+        <span class="hero-subline-content">
+          <span class="hero-subline-lead">기획사나 회사에 컨택받지 못했더라도</span>
+          <span class="hero-subline-highlight">
+            <span class="hero-subline-highlight-text">세상에 내놓을 수 있다.</span>
+            <span class="hero-subline-underline" aria-hidden="true"></span>
+          </span>
+        </span>
+      </p>
+    </section>
+
+    <section class="how-block" id="how">
+      <div class="section-header">
+        <span class="section-tag">How it works</span>
+        <p class="steps-badge"><span class="steps-badge-num">2</span>단계면 끝. 아주 간단합니다.</p>
+        <h2 class="section-title">이렇게 시작하세요</h2>
+        <div class="simplicity-callout">
+          <p class="simplicity-text">
+            <span class="simplicity-word simplicity-word-1">프로필 만들고</span>,
+            <span class="simplicity-word simplicity-word-2">작품 올리고 가격 설정하면</span> 됩니다.
+          </p>
+          <p class="simplicity-punch">그게 전부예요.</p>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">01</div>
+          <h3>프로필 만들기</h3>
+          <p>닉네임, 장르, 역할(작곡·작사·가수)을 입력하세요. 완벽할 필요 없습니다.</p>
+          <button type="button" class="btn btn-outline step-btn" id="profileBtnHero">프로필 만들기</button>
+        </div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <h3>작품 올리기</h3>
+          <p>미디작곡 WAV·작사 — 유형을 고르고 작품을 업로드하세요.</p>
+          <button type="button" class="btn btn-outline step-btn" id="uploadBtnHero">작품 올리기</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="profile-summary" id="profileSummary" hidden>
+      <div class="profile-card" id="profileCard"></div>
+    </section>
+
+    <section class="market-section">
+      <div class="section-head">
+        <h2>작품 마켓</h2>
+        <p id="marketCount">예시 작품을 확인해 보세요.</p>
+      </div>
+
+      <div class="market-search">
+        <label class="search-field">
+          <span class="sr-only">작품 검색</span>
+          <input
+            type="search"
+            id="marketSearch"
+            placeholder="아티스트 또는 제목 검색 (예: 민수작곡, 밤하늘 MR)"
+            autocomplete="off"
+          >
+        </label>
+        <div class="search-examples">
+          <span class="search-examples-label">예시 검색</span>
+          <button type="button" class="search-tag" data-query="민수작곡">민수작곡</button>
+          <button type="button" class="search-tag" data-query="하늘작사">하늘작사</button>
+          <button type="button" class="search-tag" data-query="밤하늘 MR">밤하늘 MR</button>
+          <button type="button" class="search-tag" data-query="별빛 아래">별빛 아래</button>
+        </div>
+      </div>
+
+      <p class="market-label" id="examplesLabel">예시 작품</p>
+      <div class="market-examples" id="marketExamples"></div>
+      <div class="market-user-section hidden" id="marketUserSection">
+        <p class="market-label">등록된 작품</p>
+        <div class="works-grid" id="marketGrid"></div>
+      </div>
+    </section>
+
+    <section class="my-section hidden" id="mySection">
+      <div class="section-head">
+        <h2 id="mySectionTitle">내 작품</h2>
+      </div>
+      <div class="works-grid" id="myGrid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 PARAGON — HTML 데모 (localStorage)</p>
+    </div>
+  </footer>
+
+  <!-- Profile Modal -->
+  <div class="modal-overlay" id="profileModal" aria-hidden="true">
+    <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+      <button class="modal-close" id="profileModalClose" type="button" aria-label="닫기">&times;</button>
+      <h2 class="modal-title" id="profileModalTitle">프로필 만들기</h2>
+      <p class="modal-desc">매칭에 사용할 기본 정보를 입력해 주세요</p>
+      <form class="modal-form" id="profileForm">
+        <label class="form-field">
+          <span class="form-label">닉네임</span>
+          <input type="text" name="nickname" placeholder="사용할 닉네임" required maxlength="20" autocomplete="nickname">
+        </label>
+        <label class="form-field">
+          <span class="form-label">장르</span>
+          <select name="genre" required>
+            <option value="">장르를 선택하세요</option>
+            <option value="K-POP">K-POP</option>
+            <option value="발라드">발라드</option>
+            <option value="R&B">R&B</option>
+            <option value="힙합">힙합</option>
+            <option value="록">록</option>
+            <option value="인디">인디</option>
+            <option value="포크">포크</option>
+            <option value="EDM">EDM</option>
+            <option value="재즈">재즈</option>
+            <option value="트로트">트로트</option>
+            <option value="기타">기타</option>
+          </select>
+        </label>
+        <fieldset class="form-field role-field">
+          <legend class="form-label">역할 <span class="form-optional">(복수 선택 가능)</span></legend>
+          <div class="role-options">
+            <label class="role-option">
+              <input type="checkbox" name="role" value="composer">
+              <span>작곡</span>
+            </label>
+            <label class="role-option">
+              <input type="checkbox" name="role" value="lyricist">
+              <span>작사</span>
+            </label>
+            <label class="role-option">
+              <input type="checkbox" name="role" value="vocalist">
+              <span>가수</span>
+            </label>
+          </div>
+        </fieldset>
+        <button type="submit" class="btn btn-primary btn-full">프로필 저장</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Upload Modal -->
+  <div class="modal-overlay" id="uploadModal" aria-hidden="true">
+    <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle">
+      <button class="modal-close" id="uploadModalClose" type="button" aria-label="닫기">&times;</button>
+      <h2 class="modal-title" id="uploadModalTitle">작품 올리기</h2>
+      <p class="modal-desc">업로드 유형을 선택하고 파일을 등록하세요</p>
+      <form class="modal-form" id="uploadForm">
+        <fieldset class="form-field upload-type-field">
+          <legend class="form-label">유형</legend>
+          <div class="upload-type-options upload-type-options-2">
+            <label class="upload-type-option">
+              <input type="radio" name="uploadType" value="midi" checked>
+              <span class="upload-type-card">
+                <strong>미디작곡</strong>
+                <small>WAV 파일 업로드</small>
+              </span>
+            </label>
+            <label class="upload-type-option">
+              <input type="radio" name="uploadType" value="lyricist">
+              <span class="upload-type-card">
+                <strong>작사</strong>
+                <small>가사·문서 업로드</small>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="upload-panel" data-panel="midi">
+          <label class="form-field">
+            <span class="form-label">작품 제목 <span class="form-optional">(가제)</span></span>
+            <input type="text" name="midiTitle" placeholder="가제 작품 제목을 입력하세요">
+          </label>
+          <label class="form-field">
+            <span class="form-label">BPM <span class="form-optional">(선택)</span></span>
+            <input type="number" name="midiBpm" placeholder="예: 120" min="1" max="999" inputmode="numeric">
+          </label>
+          <label class="form-field">
+            <span class="form-label">분위기 <span class="form-optional">(선택)</span></span>
+            <textarea name="midiDesc" rows="3" placeholder="예: 잔잔한, 몽환적인"></textarea>
+          </label>
+          <label class="form-field file-field">
+            <span class="form-label">WAV 파일</span>
+            <div class="file-upload">
+              <input type="file" name="midiFile" accept=".wav,audio/wav">
+              <span class="file-upload-text">클릭하여 WAV 파일 선택</span>
+              <span class="file-name" data-file-name></span>
+            </div>
+          </label>
+        </div>
+
+        <div class="upload-panel hidden" data-panel="lyricist">
+          <label class="form-field">
+            <span class="form-label">작품 제목 <span class="form-optional">(가제)</span></span>
+            <input type="text" name="lyricistTitle" placeholder="가제 작품 제목을 입력하세요">
+          </label>
+          <label class="form-field">
+            <span class="form-label">분위기 <span class="form-optional">(선택)</span></span>
+            <textarea name="lyricistDesc" rows="3" placeholder="예: 몽환적인, 따뜻한"></textarea>
+          </label>
+          <label class="form-field">
+            <span class="form-label">가사</span>
+            <textarea name="lyricistLyrics" rows="8" placeholder="판매할 가사를 입력하세요. 절마다 빈 줄을 넣으면 구조가 더 잘 보입니다."></textarea>
+          </label>
+          <label class="form-field">
+            <span class="form-label">핵심 한 줄 <span class="form-optional">(맛보기용, 선택)</span></span>
+            <input type="text" name="lyricistHook" placeholder="구매 전 공개할 가장 강한 한 줄">
+          </label>
+          <label class="form-field file-field">
+            <span class="form-label">문서 파일 업로드 <span class="form-optional">(TXT·DOC·PDF)</span></span>
+            <div class="file-upload">
+              <input type="file" name="lyricistDoc" accept=".txt,.doc,.docx,.pdf,.hwp">
+              <span class="file-upload-text">클릭하여 문서 파일 선택</span>
+              <span class="file-name" data-file-name></span>
+            </div>
+          </label>
+        </div>
+
+        <label class="form-field">
+          <span class="form-label">판매 가격 <span class="form-optional">(적정가격 1만원)</span></span>
+          <div class="price-input">
+            <input type="number" name="price" placeholder="10000" min="1000" step="1000" required inputmode="numeric">
+            <span>원</span>
+          </div>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-full">업로드하기</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <script src="js/shared.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
