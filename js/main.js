@@ -296,11 +296,17 @@ function createRankingRow(work, rank) {
   const row = document.createElement('li');
   const isSold = work.status === 'sold';
   const bpmLabel = work.bpm ? `${work.bpm} BPM` : '—';
+  const genreTag = work.genre
+    ? `<span class="rank-genre">${escapeHtml(work.genre)}</span>`
+    : '';
 
   row.className = `market-rank-item${isSold ? ' sold' : ''}`;
   row.innerHTML = `
     <span class="rank-num">${String(rank).padStart(2, '0')}</span>
-    <span class="rank-title" title="${escapeHtml(work.title)}">${escapeHtml(work.title)}</span>
+    <span class="rank-title-wrap">
+      <span class="rank-title" title="${escapeHtml(work.title)}">${escapeHtml(work.title)}</span>
+      ${genreTag}
+    </span>
     <span class="rank-bpm">${bpmLabel}</span>
   `;
 
@@ -329,7 +335,7 @@ function renderRankingColumn(label, works) {
   head.className = 'market-ranking-head';
   head.innerHTML = `
     <span class="market-ranking-label">${label}</span>
-    <span class="market-ranking-meta">제목 · BPM · 최신순</span>
+    <span class="market-ranking-meta">제목 · 장르 · BPM · 최신순</span>
   `;
   col.appendChild(head);
 
@@ -553,6 +559,7 @@ uploadForm.addEventListener('submit', async (e) => {
     uploadType: type,
     category: config.category,
     seller: profile.nickname,
+    genre: profile.genre,
     price,
     status: 'available',
     buyer: null,

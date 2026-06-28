@@ -542,6 +542,10 @@ a {
   opacity: 0.45;
 }
 
+.market-rank-item.sold .rank-title-wrap {
+  opacity: 0.85;
+}
+
 .market-rank-item.sold .rank-title {
   text-decoration: line-through;
 }
@@ -552,11 +556,29 @@ a {
   color: var(--accent-2);
 }
 
+.rank-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
 .rank-title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text);
+}
+
+.rank-genre {
+  flex-shrink: 0;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(123, 108, 240, 0.15);
+  color: var(--accent-2);
+  font-size: 0.68rem;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .rank-bpm {

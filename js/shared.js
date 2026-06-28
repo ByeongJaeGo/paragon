@@ -23,6 +23,7 @@ const SAMPLE_WORKS = [
     isSample: true,
     title: '밤하늘 MR',
     seller: '민수작곡',
+    genre: '발라드',
     price: 10000,
     bpm: 72,
     note: '잔잔한, 감성적인',
@@ -38,6 +39,7 @@ const SAMPLE_WORKS = [
     isSample: true,
     title: '새벽 라운지 MR',
     seller: '소라비트',
+    genre: '재즈',
     price: 12000,
     bpm: 88,
     note: '재즈, 몽환적인',
@@ -53,6 +55,7 @@ const SAMPLE_WORKS = [
     isSample: true,
     title: 'Rainy Mood MR',
     seller: '재즈키',
+    genre: 'R&B',
     price: 15000,
     bpm: 64,
     note: '비 오는 날, 피아노',
@@ -68,6 +71,7 @@ const SAMPLE_WORKS = [
     isSample: true,
     title: 'Urban Groove MR',
     seller: '윤프로듀서',
+    genre: '힙합',
     price: 10000,
     bpm: 96,
     note: '힙합, 그루브',
@@ -83,6 +87,7 @@ const SAMPLE_WORKS = [
     isSample: true,
     title: 'Sunset Coffee MR',
     seller: '카페비트',
+    genre: '인디',
     price: 8000,
     bpm: 78,
     note: '어쿠스틱, 따뜻한',
@@ -99,6 +104,7 @@ const SAMPLE_WORKS = [
     isSample: true,
     title: '별빛 아래 (가제)',
     seller: '하늘작사',
+    genre: 'K-POP',
     price: 10000,
     note: '몽환적인, 따뜻한',
     lyrics: '별빛 아래 걸어가\n네 이름을 불러봐\n\n우리만의 멜로디\n영원히 끝나지 않게\n\n창가에 기대 앉아\n하얀 달을 바라보며\n너에게 전할 이 노래\n조용히 번지는 이 밤',
@@ -115,6 +121,7 @@ const SAMPLE_WORKS = [
     isSample: true,
     title: '첫눈 내리던 날',
     seller: '이은작사',
+    genre: '발라드',
     price: 12000,
     note: '겨울, 서정적인',
     lyrics: '하얀 거리 위를 걸어\n발자국만 남긴 채\n\n첫눈이 내리던 날\n네 손을 잡았던 기억\n\n바람에 흩날리던 말\n아직도 귓가에 남아\n그날의 온기처럼\n내 마음을 데워',
@@ -131,6 +138,7 @@ const SAMPLE_WORKS = [
     isSample: true,
     title: '너의 이름',
     seller: '수연가사',
+    genre: '발라드',
     price: 10000,
     note: '발라드, 그리움',
     lyrics: '조용히 불러본 이름\n하루 종일 입안에 맴돌아\n\n너의 이름 한 글자마다\n내 하루가 채워져\n\n멀어진 그 자리에\n아직 네 향기가 남아\n돌아올 수 없다는 걸\n알면서도 기다려',
@@ -147,6 +155,7 @@ const SAMPLE_WORKS = [
     isSample: true,
     title: '창문 너머',
     seller: '김시인',
+    genre: '인디',
     price: 15000,
     note: '인디, 잔잔한',
     lyrics: '창문 너머로 스며든 빛\n먼지처럼 춤을 춰\n\n창문 너머 세상은\n늘 나와 다른 속도로\n\n커피잔 위에 맺힌\n작은 원 하나처럼\n오늘도 나는 여기\n너를 떠올려',
@@ -163,6 +172,7 @@ const SAMPLE_WORKS = [
     isSample: true,
     title: 'goodbye letter',
     seller: '달빛펜',
+    genre: 'R&B',
     price: 8000,
     note: '영어 가사, 감성',
     lyrics: 'I wrote a letter I won\'t send\nFolded tears between the lines\n\nGoodbye letter in the drawer\nEvery word still calls your name\n\nMaybe one day you\'ll read\nWhat I never said aloud\nUntil then this quiet song\nWill be my goodbye now',
@@ -481,19 +491,9 @@ function buildPaymentSummaryHtml(work) {
     <div class="order-row order-total"><span>결제 금액</span><strong>${formatPrice(breakdown.total)}</strong></div>
   `;
 
-  if (hasPlatformAccount()) {
-    html += `
-      <div class="platform-settlement">
-        <p class="platform-settlement-title">PARAGON 수수료 정산 계좌</p>
-        <p class="platform-settlement-account">${escapeHtml(formatPlatformAccountDisplay())}</p>
-        <p class="form-hint">결제 금액 ${formatPrice(breakdown.total)} 중 수수료 ${formatPrice(breakdown.platformFee)}는 위 운영 계좌로, ${formatPrice(breakdown.sellerPayout)}는 판매자 계좌로 정산됩니다.</p>
-      </div>
-    `;
-  } else {
-    html += `
-      <p class="form-hint order-fee-note">플랫폼 수수료 ${feeLabel}(${formatPrice(breakdown.platformFee)})가 판매 대금에서 차감됩니다.</p>
-    `;
-  }
+  html += `
+    <p class="form-hint order-fee-note">플랫폼 수수료 ${feeLabel}(${formatPrice(breakdown.platformFee)})가 판매 대금에서 차감됩니다.</p>
+  `;
 
   return html;
 }
