@@ -1,25 +1,10 @@
-(function initAdSense() {
-  const config = window.PARAGON_ADSENSE || {};
-  const publisherId = String(config.publisherId || '').trim();
-
-  if (!publisherId || publisherId.includes('XXXX') || !publisherId.startsWith('ca-pub-')) {
-    return;
-  }
+(function initAdSlots() {
+  const publisherId = window.PARAGON_ADSENSE?.publisherId?.trim();
+  if (!publisherId?.startsWith('ca-pub-')) return;
 
   document.documentElement.classList.add('adsense-enabled');
 
-  const meta = document.createElement('meta');
-  meta.name = 'google-adsense-account';
-  meta.content = publisherId;
-  document.head.appendChild(meta);
-
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(publisherId)}`;
-  script.crossOrigin = 'anonymous';
-  document.head.appendChild(script);
-
-  script.addEventListener('load', () => {
+  function fillSlots() {
     document.querySelectorAll('.adsbygoogle').forEach((slot) => {
       if (!slot.dataset.adClient) {
         slot.dataset.adClient = publisherId;
@@ -30,5 +15,11 @@
         /* ignore ad blockers */
       }
     });
-  });
+  }
+
+  if (window.adsbygoogle) {
+    fillSlots();
+  } else {
+    window.addEventListener('load', fillSlots);
+  }
 })();
