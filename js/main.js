@@ -192,7 +192,7 @@ function createWorkCard(work, mode) {
   body += `
     <div class="card-top">
       <span class="type">${getCategoryLabel(work)}</span>
-      ${work.isSample ? '<span class="badge sample-badge">예시</span>' : ''}
+      ${work.isSample && mode !== 'market' ? '<span class="badge sample-badge">예시</span>' : ''}
       ${isSold ? '<span class="badge sold-badge">판매 완료</span>' : '<span class="badge on-sale">판매 중</span>'}
     </div>
     <h3>${escapeHtml(work.title)}</h3>
@@ -296,39 +296,44 @@ function renderMarketExamples(query = '') {
 
   marketExamples.innerHTML = '';
   const samples = getSampleWorks().filter((w) => matchesWorkSearch(w, query));
-  const columns = [
-    { label: '작곡', work: samples.find((w) => w.category === 'composer') },
-    { label: '작사', work: samples.find((w) => w.category === 'lyricist') },
-  ].filter((col) => col.work);
+  const groups = [
+    { label: '작곡', works: samples.filter((w) => w.category === 'composer') },
+    { label: '작사', works: samples.filter((w) => w.category === 'lyricist') },
+  ].filter((group) => group.works.length > 0);
 
-  if (columns.length === 0) {
+  if (groups.length === 0) {
     marketExamples.classList.add('market-examples-empty');
     marketExamples.innerHTML = query.trim()
-      ? `<p class="empty-state">예시 작품 중 "${escapeHtml(query.trim())}" 검색 결과가 없습니다.</p>`
+      ? `<p class="empty-state">"${escapeHtml(query.trim())}" 검색 결과가 없습니다.</p>`
       : '';
     if (examplesLabel) examplesLabel.hidden = Boolean(query.trim());
     return 0;
   }
 
   marketExamples.classList.remove('market-examples-empty');
-  if (examplesLabel) examplesLabel.hidden = false;
+  if (examplesLabel) examplesLabel.hidden = true;
 
-  if (columns.length === 1) {
+  if (groups.length === 1) {
     marketExamples.classList.add('market-examples-single');
   } else {
     marketExamples.classList.remove('market-examples-single');
   }
 
-  columns.forEach(({ label, work }) => {
+  groups.forEach(({ label, works }) => {
     const col = document.createElement('div');
     col.className = 'market-example-col';
-    col.innerHTML = `<p class="market-col-title">${label}</p>`;
-    col.appendChild(createWorkCard(work, 'market'));
+    col.innerHTML = `<p class="market-col-title">${label} <span class="market-col-count">${works.length}</span></p>`;
+    const list = document.createElement('div');
+    list.className = 'market-example-list';
+    works.forEach((work) => {
+      list.appendChild(createWorkCard(work, 'market'));
+    });
+    col.appendChild(list);
     marketExamples.appendChild(col);
   });
 
   bindCardActions(marketExamples);
-  return columns.length;
+  return samples.length;
 }
 
 function renderMarket(query = '') {
@@ -344,9 +349,9 @@ function renderMarket(query = '') {
     const totalMatches = sampleMatchCount + filteredUserWorks.length;
     marketCount.textContent = `"${q}" 검색 결과 ${totalMatches}개`;
   } else if (userWorks.length === 0) {
-    marketCount.textContent = `예시 ${getSampleWorks().length}개 · 판매 중 ${sampleAvailable}개`;
+    marketCount.textContent = `등록 ${getSampleWorks().length}개 · 판매 중 ${sampleAvailable}개`;
   } else {
-    marketCount.textContent = `예시 ${getSampleWorks().length}개 · 등록 ${userWorks.length}개 · 판매 중 ${available + sampleAvailable}개`;
+    marketCount.textContent = `등록 ${getSampleWorks().length + userWorks.length}개 · 판매 중 ${available + sampleAvailable}개`;
   }
 
   marketGrid.innerHTML = '';
