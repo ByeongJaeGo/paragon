@@ -15,12 +15,9 @@ const profileCard = document.getElementById('profileCard');
 const uploadModal = document.getElementById('uploadModal');
 const uploadModalClose = document.getElementById('uploadModalClose');
 const uploadForm = document.getElementById('uploadForm');
-const marketGrid = document.getElementById('marketGrid');
 const marketExamples = document.getElementById('marketExamples');
-const marketUserSection = document.getElementById('marketUserSection');
 const marketCount = document.getElementById('marketCount');
 const marketSearch = document.getElementById('marketSearch');
-const examplesLabel = document.getElementById('examplesLabel');
 const mySection = document.getElementById('mySection');
 const mySectionTitle = document.getElementById('mySectionTitle');
 const myGrid = document.getElementById('myGrid');
@@ -291,92 +288,109 @@ function goToChat(workId) {
   window.location.href = `chat.html?workId=${encodeURIComponent(workId)}`;
 }
 
+function sortWorksByLatest(works) {
+  return works.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+function createRankingRow(work, rank) {
+  const row = document.createElement('li');
+  const isSold = work.status === 'sold';
+  const bpmLabel = work.bpm ? `${work.bpm} BPM` : '—';
+
+  row.className = `market-rank-item${isSold ? ' sold' : ''}`;
+  row.innerHTML = `
+    <span class="rank-num">${String(rank).padStart(2, '0')}</span>
+    <span class="rank-title" title="${escapeHtml(work.title)}">${escapeHtml(work.title)}</span>
+    <span class="rank-bpm">${bpmLabel}</span>
+  `;
+
+  if (!isSold) {
+    row.classList.add('rank-clickable');
+    row.tabIndex = 0;
+    row.setAttribute('role', 'button');
+    row.setAttribute('aria-label', `${work.title} 구매하기`);
+    row.addEventListener('click', () => goToPayment(work.id));
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        goToPayment(work.id);
+      }
+    });
+  }
+
+  return row;
+}
+
+function renderRankingColumn(label, works) {
+  const col = document.createElement('div');
+  col.className = 'market-ranking-col';
+
+  const head = document.createElement('div');
+  head.className = 'market-ranking-head';
+  head.innerHTML = `
+    <span class="market-ranking-label">${label}</span>
+    <span class="market-ranking-meta">제목 · BPM · 최신순</span>
+  `;
+  col.appendChild(head);
+
+  const list = document.createElement('ol');
+  list.className = 'market-rank-list';
+  works.forEach((work, index) => {
+    list.appendChild(createRankingRow(work, index + 1));
+  });
+  col.appendChild(list);
+
+  return col;
+}
+
 function renderMarketExamples(query = '') {
   if (!marketExamples) return 0;
 
   marketExamples.innerHTML = '';
-  const samples = getSampleWorks().filter((w) => matchesWorkSearch(w, query));
+  const userWorks = getWorks().filter((w) => !w.isSample);
+  const allWorks = [...getSampleWorks(), ...userWorks].filter((w) => matchesWorkSearch(w, query));
+  const composerWorks = sortWorksByLatest(allWorks.filter((w) => w.category === 'composer'));
+  const lyricistWorks = sortWorksByLatest(allWorks.filter((w) => isLyricWork(w)));
   const groups = [
-    { label: '작곡', works: samples.filter((w) => w.category === 'composer') },
-    { label: '작사', works: samples.filter((w) => w.category === 'lyricist') },
+    { label: '작곡', works: composerWorks },
+    { label: '작사', works: lyricistWorks },
   ].filter((group) => group.works.length > 0);
 
   if (groups.length === 0) {
-    marketExamples.classList.add('market-examples-empty');
+    marketExamples.classList.add('market-rankings-empty');
     marketExamples.innerHTML = query.trim()
       ? `<p class="empty-state">"${escapeHtml(query.trim())}" 검색 결과가 없습니다.</p>`
-      : '';
-    if (examplesLabel) examplesLabel.hidden = Boolean(query.trim());
+      : '<p class="empty-state">등록된 작품이 없습니다.</p>';
     return 0;
   }
 
-  marketExamples.classList.remove('market-examples-empty');
-  if (examplesLabel) examplesLabel.hidden = true;
-
+  marketExamples.classList.remove('market-rankings-empty');
   if (groups.length === 1) {
-    marketExamples.classList.add('market-examples-single');
+    marketExamples.classList.add('market-rankings-single');
   } else {
-    marketExamples.classList.remove('market-examples-single');
+    marketExamples.classList.remove('market-rankings-single');
   }
 
   groups.forEach(({ label, works }) => {
-    const col = document.createElement('div');
-    col.className = 'market-example-col';
-    col.innerHTML = `<p class="market-col-title">${label} <span class="market-col-count">${works.length}</span></p>`;
-    const list = document.createElement('div');
-    list.className = 'market-example-list';
-    works.forEach((work) => {
-      list.appendChild(createWorkCard(work, 'market'));
-    });
-    col.appendChild(list);
-    marketExamples.appendChild(col);
+    marketExamples.appendChild(renderRankingColumn(label, works));
   });
 
-  bindCardActions(marketExamples);
-  return samples.length;
+  return allWorks.length;
 }
 
 function renderMarket(query = '') {
-  const works = getWorks();
-  const userWorks = works.filter((w) => !w.isSample);
-  const filteredUserWorks = userWorks.filter((w) => matchesWorkSearch(w, query));
-  const sampleMatchCount = renderMarketExamples(query);
+  const userWorks = getWorks().filter((w) => !w.isSample);
+  const matchCount = renderMarketExamples(query);
   const sampleAvailable = getSampleWorks().filter((w) => w.status === 'available').length;
   const available = userWorks.filter((w) => w.status === 'available').length;
   const q = query.trim();
 
   if (q) {
-    const totalMatches = sampleMatchCount + filteredUserWorks.length;
-    marketCount.textContent = `"${q}" 검색 결과 ${totalMatches}개`;
-  } else if (userWorks.length === 0) {
-    marketCount.textContent = `등록 ${getSampleWorks().length}개 · 판매 중 ${sampleAvailable}개`;
+    marketCount.textContent = `"${q}" 검색 결과 ${matchCount}개`;
   } else {
-    marketCount.textContent = `등록 ${getSampleWorks().length + userWorks.length}개 · 판매 중 ${available + sampleAvailable}개`;
+    const total = getSampleWorks().length + userWorks.length;
+    marketCount.textContent = `등록 ${total}개 · 판매 중 ${available + sampleAvailable}개`;
   }
-
-  marketGrid.innerHTML = '';
-
-  if (filteredUserWorks.length === 0) {
-    if (marketUserSection) {
-      marketUserSection.classList.toggle('hidden', userWorks.length === 0 && !q);
-      if (q && userWorks.length > 0) {
-        marketUserSection.classList.remove('hidden');
-        marketGrid.innerHTML = `<p class="empty-state">등록 작품 중 "${escapeHtml(q)}" 검색 결과가 없습니다.</p>`;
-      } else if (q && userWorks.length === 0) {
-        marketUserSection.classList.add('hidden');
-      } else {
-        marketUserSection.classList.add('hidden');
-      }
-    }
-    return;
-  }
-
-  if (marketUserSection) marketUserSection.classList.remove('hidden');
-  filteredUserWorks.slice().reverse().forEach((work) => {
-    marketGrid.appendChild(createWorkCard(work, 'market'));
-  });
-
-  bindCardActions(marketGrid);
 }
 
 function renderUI() {

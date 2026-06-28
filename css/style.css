@@ -463,6 +463,108 @@ a {
   border: 0;
 }
 
+.market-rankings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.market-rankings-single {
+  grid-template-columns: minmax(0, 520px);
+}
+
+.market-rankings-empty {
+  grid-template-columns: 1fr;
+}
+
+.market-ranking-col {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+
+.market-ranking-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(232, 168, 73, 0.06);
+}
+
+.market-ranking-label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.market-ranking-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.market-rank-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.market-rank-item {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  gap: 0.5rem 0.65rem;
+  align-items: center;
+  padding: 0.5rem 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 0.88rem;
+}
+
+.market-rank-item:last-child {
+  border-bottom: none;
+}
+
+.market-rank-item.rank-clickable {
+  cursor: pointer;
+}
+
+.market-rank-item.rank-clickable:hover,
+.market-rank-item.rank-clickable:focus-visible {
+  background: rgba(232, 168, 73, 0.08);
+  outline: none;
+}
+
+.market-rank-item.sold {
+  opacity: 0.45;
+}
+
+.market-rank-item.sold .rank-title {
+  text-decoration: line-through;
+}
+
+.rank-num {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent-2);
+}
+
+.rank-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.rank-bpm {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 .market-examples-single {
   grid-template-columns: 1fr;
   max-width: 420px;
@@ -1655,6 +1757,10 @@ textarea {
 
 @media (max-width: 600px) {
   .steps {
+    grid-template-columns: 1fr;
+  }
+
+  .market-rankings {
     grid-template-columns: 1fr;
   }
 
