@@ -10,8 +10,6 @@ const uploadBtnHero = document.getElementById('uploadBtnHero');
 const profileModal = document.getElementById('profileModal');
 const profileModalClose = document.getElementById('profileModalClose');
 const profileForm = document.getElementById('profileForm');
-const profileSummary = document.getElementById('profileSummary');
-const profileCard = document.getElementById('profileCard');
 const uploadModal = document.getElementById('uploadModal');
 const uploadModalClose = document.getElementById('uploadModalClose');
 const uploadForm = document.getElementById('uploadForm');
@@ -292,6 +290,14 @@ function sortWorksByLatest(works) {
   return works.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
+function handleRankingClick(work) {
+  if (work.isSample) {
+    alert('테스트용 예시 작품입니다.\n실제 구매·다운로드는 되지 않습니다.');
+    return;
+  }
+  goToPayment(work.id);
+}
+
 function createRankingRow(work, rank) {
   const row = document.createElement('li');
   const isSold = work.status === 'sold';
@@ -307,6 +313,7 @@ function createRankingRow(work, rank) {
       <span class="rank-title" title="${escapeHtml(work.title)}">${escapeHtml(work.title)}</span>
       ${genreTag}
     </span>
+    <span class="rank-price">${formatPrice(work.price)}</span>
     <span class="rank-bpm">${bpmLabel}</span>
   `;
 
@@ -314,12 +321,12 @@ function createRankingRow(work, rank) {
     row.classList.add('rank-clickable');
     row.tabIndex = 0;
     row.setAttribute('role', 'button');
-    row.setAttribute('aria-label', `${work.title} 구매하기`);
-    row.addEventListener('click', () => goToPayment(work.id));
+    row.setAttribute('aria-label', `${work.title} ${formatPrice(work.price)}`);
+    row.addEventListener('click', () => handleRankingClick(work));
     row.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        goToPayment(work.id);
+        handleRankingClick(work);
       }
     });
   }
@@ -335,7 +342,7 @@ function renderRankingColumn(label, works) {
   head.className = 'market-ranking-head';
   head.innerHTML = `
     <span class="market-ranking-label">${label}</span>
-    <span class="market-ranking-meta">제목 · 장르 · BPM · 최신순</span>
+    <span class="market-ranking-meta">제목 · 장르 · 가격 · BPM · 최신순</span>
   `;
   col.appendChild(head);
 
@@ -405,23 +412,8 @@ function renderUI() {
   const query = marketSearch?.value || '';
 
   if (profile) {
-    profileSummary.hidden = false;
     if (profileAlert) profileAlert.hidden = true;
 
-    const hints = [];
-    if (isSeller(profile.roles)) hints.push('작품을 올려 판매할 수 있습니다.');
-    hints.push('마켓에서 누구나 작품을 구매할 수 있습니다.');
-
-    profileCard.innerHTML = `
-      <p><strong>${escapeHtml(profile.nickname)}</strong> · ${escapeHtml(profile.genre)}</p>
-      <p class="profile-roles">${escapeHtml(getRolesLabel(profile.roles))}</p>
-      ${hasSellerAccount(profile)
-        ? `<p class="profile-account">정산 계좌 · ${escapeHtml(formatMaskedAccount(profile.bankAccount))}</p>`
-        : isSeller(profile.roles)
-          ? '<p class="profile-account">정산 계좌 · 작품 등록 시 입력</p>'
-          : ''}
-      <p class="profile-hint">${hints.join(' ')}</p>
-    `;
     uploadBtn.classList.remove('hidden');
 
     mySection.classList.remove('hidden');
@@ -440,7 +432,6 @@ function renderUI() {
       });
     }
   } else {
-    profileSummary.hidden = true;
     uploadBtn.classList.add('hidden');
     mySection.classList.add('hidden');
     if (profileAlert) profileAlert.hidden = false;

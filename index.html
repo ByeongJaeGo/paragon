@@ -72,34 +72,66 @@
       </p>
     </section>
 
-    <section class="how-block" id="how">
-      <div class="section-header">
-        <span class="section-tag">How it works</span>
-        <p class="steps-badge"><span class="steps-badge-num">2</span>단계면 끝. 아주 간단합니다.</p>
-        <h2 class="section-title">이렇게 시작하세요</h2>
-        <div class="simplicity-callout">
-          <p class="simplicity-text">
-            <span class="simplicity-word simplicity-word-1">프로필 만들고</span>,
-            <span class="simplicity-word simplicity-word-2">작품 올리고 가격 설정하면</span> 됩니다.
-          </p>
-          <p class="simplicity-punch">그게 전부예요.</p>
+    <div class="start-market-block">
+      <section class="how-block" id="how">
+        <div class="section-header">
+          <span class="section-tag">How it works</span>
+          <p class="steps-badge"><span class="steps-badge-num">2</span>단계면 끝. 아주 간단합니다.</p>
+          <h2 class="section-title">이렇게 시작하세요</h2>
+          <div class="simplicity-callout">
+            <p class="simplicity-text">
+              <span class="simplicity-word simplicity-word-1">프로필 만들고</span>,
+              <span class="simplicity-word simplicity-word-2">작품 올리고 가격 설정하면</span> 됩니다.
+            </p>
+            <p class="simplicity-punch">그게 전부예요.</p>
+          </div>
         </div>
-      </div>
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">01</div>
-          <h3>프로필 만들기</h3>
-          <p>닉네임, 장르, 역할(작곡·작사·가수)을 입력하세요.</p>
-          <button type="button" class="btn btn-outline step-btn" id="profileBtnHero">프로필 만들기</button>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">01</div>
+            <h3>프로필 만들기</h3>
+            <p>닉네임, 장르, 역할(작곡·작사·가수)을 입력하세요.</p>
+            <button type="button" class="btn btn-outline step-btn" id="profileBtnHero">프로필 만들기</button>
+          </div>
+          <div class="step">
+            <div class="step-num">02</div>
+            <h3>작품 올리기</h3>
+            <p>미디작곡 WAV·작사 — 유형을 고르고 작품을 업로드하세요.</p>
+            <button type="button" class="btn btn-outline step-btn" id="uploadBtnHero">작품 올리기</button>
+          </div>
         </div>
-        <div class="step">
-          <div class="step-num">02</div>
-          <h3>작품 올리기</h3>
-          <p>미디작곡 WAV·작사 — 유형을 고르고 작품을 업로드하세요.</p>
-          <button type="button" class="btn btn-outline step-btn" id="uploadBtnHero">작품 올리기</button>
+      </section>
+
+      <section class="market-section">
+        <div class="section-head">
+          <h2>최신 업로드 작품 랭킹</h2>
+          <p id="marketCount">작품을 둘러보세요.</p>
         </div>
-      </div>
-    </section>
+
+        <div class="market-search">
+          <label class="search-field">
+            <span class="sr-only">작품 검색</span>
+            <input
+              type="search"
+              id="marketSearch"
+              placeholder="아티스트 또는 제목 검색 (예: 민수작곡, 밤하늘 MR)"
+              autocomplete="off"
+            >
+          </label>
+          <div class="search-examples">
+            <span class="search-examples-label">예시 검색</span>
+            <button type="button" class="search-tag" data-query="민수작곡">민수작곡</button>
+            <button type="button" class="search-tag" data-query="소라비트">소라비트</button>
+            <button type="button" class="search-tag" data-query="하늘작사">하늘작사</button>
+            <button type="button" class="search-tag" data-query="이은작사">이은작사</button>
+            <button type="button" class="search-tag" data-query="밤하늘 MR">밤하늘 MR</button>
+            <button type="button" class="search-tag" data-query="Rainy Mood">Rainy Mood</button>
+          </div>
+        </div>
+
+        <div class="market-rankings" id="marketExamples"></div>
+      </section>
+    </div>
 
     <div class="ad-wrap" aria-label="광고">
       <ins class="adsbygoogle ad-slot"
@@ -107,40 +139,6 @@
         data-ad-format="auto"
         data-full-width-responsive="true"></ins>
     </div>
-
-    <section class="profile-summary" id="profileSummary" hidden>
-      <div class="profile-card" id="profileCard"></div>
-    </section>
-
-    <section class="market-section">
-      <div class="section-head">
-        <h2>최신 업로드 작품 랭킹</h2>
-        <p id="marketCount">작품을 둘러보세요.</p>
-      </div>
-
-      <div class="market-search">
-        <label class="search-field">
-          <span class="sr-only">작품 검색</span>
-          <input
-            type="search"
-            id="marketSearch"
-            placeholder="아티스트 또는 제목 검색 (예: 민수작곡, 밤하늘 MR)"
-            autocomplete="off"
-          >
-        </label>
-        <div class="search-examples">
-          <span class="search-examples-label">예시 검색</span>
-          <button type="button" class="search-tag" data-query="민수작곡">민수작곡</button>
-          <button type="button" class="search-tag" data-query="소라비트">소라비트</button>
-          <button type="button" class="search-tag" data-query="하늘작사">하늘작사</button>
-          <button type="button" class="search-tag" data-query="이은작사">이은작사</button>
-          <button type="button" class="search-tag" data-query="밤하늘 MR">밤하늘 MR</button>
-          <button type="button" class="search-tag" data-query="Rainy Mood">Rainy Mood</button>
-        </div>
-      </div>
-
-      <div class="market-rankings" id="marketExamples"></div>
-    </section>
 
     <section class="my-section hidden" id="mySection">
       <div class="section-head">
