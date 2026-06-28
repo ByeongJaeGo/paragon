@@ -26,7 +26,6 @@ const mySectionTitle = document.getElementById('mySectionTitle');
 const myGrid = document.getElementById('myGrid');
 const profileAlert = document.getElementById('profileAlert');
 const profileAlertBtn = document.getElementById('profileAlertBtn');
-const accountSection = document.getElementById('accountSection');
 
 let pendingUpload = false;
 
@@ -84,23 +83,6 @@ function getSelectedRoles() {
   return Array.from(profileForm.querySelectorAll('input[name="role"]:checked')).map((input) => input.value);
 }
 
-function toggleAccountSection() {
-  if (!accountSection) return;
-
-  const show = isSeller(getSelectedRoles());
-  accountSection.classList.toggle('hidden', !show);
-
-  profileForm.bankName.required = show;
-  profileForm.accountNumber.required = show;
-  profileForm.accountHolder.required = show;
-}
-
-function fillAccountFields(profile) {
-  profileForm.bankName.value = profile?.bankAccount?.bankName || '';
-  profileForm.accountNumber.value = profile?.bankAccount?.accountNumber || '';
-  profileForm.accountHolder.value = profile?.bankAccount?.accountHolder || '';
-}
-
 function getRolesLabel(roles) {
   return roles.map((r) => ROLE_LABELS[r]).join(', ');
 }
@@ -126,11 +108,7 @@ function openProfileModal() {
     profileForm.querySelectorAll('input[name="role"]').forEach((input) => {
       input.checked = profile.roles.includes(input.value);
     });
-    fillAccountFields(profile);
-  } else {
-    fillAccountFields(null);
   }
-  toggleAccountSection();
   openModal(profileModal);
 }
 
@@ -172,13 +150,6 @@ function openUploadModal() {
   if (!hasProfile()) {
     pendingUpload = true;
     showProfileNotice();
-    openProfileModal();
-    return;
-  }
-
-  const profile = getProfile();
-  if (isSeller(profile.roles) && !hasSellerAccount(profile)) {
-    showToast('판매자 계좌 정보를 먼저 입력해 주세요.');
     openProfileModal();
     return;
   }
@@ -407,11 +378,6 @@ function renderUI() {
     profileCard.innerHTML = `
       <p><strong>${escapeHtml(profile.nickname)}</strong> · ${escapeHtml(profile.genre)}</p>
       <p class="profile-roles">${escapeHtml(getRolesLabel(profile.roles))}</p>
-      ${isSeller(profile.roles) && hasSellerAccount(profile)
-        ? `<p class="profile-account">정산 계좌 · ${escapeHtml(formatMaskedAccount(profile.bankAccount))}</p>`
-        : isSeller(profile.roles)
-          ? '<p class="profile-account">정산 계좌 · 등록 필요</p>'
-          : ''}
       <p class="profile-hint">${hints.join(' ')}</p>
     `;
     uploadBtn.classList.remove('hidden');
@@ -462,14 +428,6 @@ uploadBtnHero.addEventListener('click', openUploadModal);
 profileModalClose.addEventListener('click', closeProfileModal);
 uploadModalClose.addEventListener('click', closeUploadModal);
 
-profileForm.querySelectorAll('input[name="role"]').forEach((input) => {
-  input.addEventListener('change', toggleAccountSection);
-});
-
-profileForm.accountNumber?.addEventListener('input', () => {
-  profileForm.accountNumber.value = profileForm.accountNumber.value.replace(/\D/g, '');
-});
-
 uploadForm.querySelectorAll('input[name="uploadType"]').forEach((radio) => {
   radio.addEventListener('change', () => switchUploadPanel(radio.value));
 });
@@ -506,27 +464,9 @@ profileForm.addEventListener('submit', (e) => {
     updatedAt: new Date().toISOString(),
   };
 
-  if (isSeller(roles)) {
-    const bankAccount = normalizeBankAccount({
-      bankName: profileForm.bankName.value,
-      accountNumber: profileForm.accountNumber.value,
-      accountHolder: profileForm.accountHolder.value,
-    });
-
-    if (!bankAccount?.bankName) {
-      alert('은행을 선택해 주세요.');
-      return;
-    }
-    if (!bankAccount.accountNumber || bankAccount.accountNumber.length < 10) {
-      alert('계좌번호를 10자리 이상 입력해 주세요.');
-      return;
-    }
-    if (!bankAccount.accountHolder) {
-      alert('예금주 이름을 입력해 주세요.');
-      return;
-    }
-
-    profile.bankAccount = bankAccount;
+  const existing = getProfile();
+  if (existing?.bankAccount) {
+    profile.bankAccount = existing.bankAccount;
   }
 
   saveProfile(profile);
@@ -545,12 +485,6 @@ uploadForm.addEventListener('submit', async (e) => {
 
   const profile = getProfile();
   if (!profile) return;
-
-  if (isSeller(profile.roles) && !hasSellerAccount(profile)) {
-    alert('판매자 계좌 정보를 프로필에 먼저 등록해 주세요.');
-    openProfileModal();
-    return;
-  }
 
   const type = uploadForm.uploadType.value;
   const config = UPLOAD_TYPES[type];
