@@ -290,6 +290,66 @@ function sortWorksByLatest(works) {
   return works.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
+const RANKING_PREVIEW_SECONDS = 30;
+let rankingPreviewAudio = null;
+let rankingPreviewTimer = null;
+let activeRankingPreviewBtn = null;
+
+function getWorkPreviewUrl(work) {
+  if (work.audioUrl) return work.audioUrl;
+  if (work.category === 'composer') return 'assets/sample-mr.wav';
+  return null;
+}
+
+function stopRankingPreview() {
+  if (rankingPreviewTimer) {
+    clearTimeout(rankingPreviewTimer);
+    rankingPreviewTimer = null;
+  }
+  if (rankingPreviewAudio) {
+    rankingPreviewAudio.pause();
+    rankingPreviewAudio.currentTime = 0;
+    rankingPreviewAudio.onended = null;
+  }
+  if (activeRankingPreviewBtn) {
+    activeRankingPreviewBtn.classList.remove('playing');
+    activeRankingPreviewBtn.textContent = '30초';
+    activeRankingPreviewBtn.setAttribute('aria-label', '30초 미리듣기');
+    activeRankingPreviewBtn = null;
+  }
+}
+
+function playRankingPreview(work, btn) {
+  const url = getWorkPreviewUrl(work);
+  if (!url) {
+    alert('미리듣기 파일이 없습니다.');
+    return;
+  }
+
+  if (activeRankingPreviewBtn === btn) {
+    stopRankingPreview();
+    return;
+  }
+
+  stopRankingPreview();
+
+  rankingPreviewAudio = rankingPreviewAudio || new Audio();
+  rankingPreviewAudio.src = url;
+  rankingPreviewAudio.currentTime = 0;
+  activeRankingPreviewBtn = btn;
+  btn.classList.add('playing');
+  btn.textContent = '■';
+  btn.setAttribute('aria-label', '미리듣기 정지');
+
+  rankingPreviewAudio.onended = () => stopRankingPreview();
+  rankingPreviewAudio.play().catch(() => {
+    alert('미리듣기를 재생할 수 없습니다.');
+    stopRankingPreview();
+  });
+
+  rankingPreviewTimer = setTimeout(stopRankingPreview, RANKING_PREVIEW_SECONDS * 1000);
+}
+
 function handleRankingClick(work) {
   if (work.isSample) {
     alert('테스트용 예시 작품입니다.\n실제 구매·다운로드는 되지 않습니다.');
@@ -298,24 +358,34 @@ function handleRankingClick(work) {
   goToPayment(work.id);
 }
 
-function createRankingRow(work, rank) {
+function createRankingRow(work, rank, isComposer = false) {
   const row = document.createElement('li');
   const isSold = work.status === 'sold';
   const bpmLabel = work.bpm ? `${work.bpm} BPM` : '—';
   const genreTag = work.genre
     ? `<span class="rank-genre">${escapeHtml(work.genre)}</span>`
     : '';
+  const previewBtn = isComposer && getWorkPreviewUrl(work)
+    ? `<button type="button" class="rank-preview-btn" aria-label="30초 미리듣기">30초</button>`
+    : '';
 
   row.className = `market-rank-item${isSold ? ' sold' : ''}`;
   row.innerHTML = `
     <span class="rank-num">${String(rank).padStart(2, '0')}</span>
     <span class="rank-title-wrap">
+      ${previewBtn}
       <span class="rank-title" title="${escapeHtml(work.title)}">${escapeHtml(work.title)}</span>
       ${genreTag}
     </span>
     <span class="rank-price">${formatPrice(work.price)}</span>
     <span class="rank-bpm">${bpmLabel}</span>
   `;
+
+  const previewButton = row.querySelector('.rank-preview-btn');
+  previewButton?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    playRankingPreview(work, previewButton);
+  });
 
   if (!isSold) {
     row.classList.add('rank-clickable');
@@ -334,7 +404,7 @@ function createRankingRow(work, rank) {
   return row;
 }
 
-function renderRankingColumn(label, works) {
+function renderRankingColumn(label, works, isComposer = false) {
   const col = document.createElement('div');
   col.className = 'market-ranking-col';
 
@@ -342,14 +412,14 @@ function renderRankingColumn(label, works) {
   head.className = 'market-ranking-head';
   head.innerHTML = `
     <span class="market-ranking-label">${label}</span>
-    <span class="market-ranking-meta">제목 · 장르 · 가격 · BPM · 최신순</span>
+    <span class="market-ranking-meta">${isComposer ? '30초 · 제목 · 장르 · 가격 · BPM' : '제목 · 장르 · 가격 · BPM'} · 최신순</span>
   `;
   col.appendChild(head);
 
   const list = document.createElement('ol');
   list.className = 'market-rank-list';
   works.forEach((work, index) => {
-    list.appendChild(createRankingRow(work, index + 1));
+    list.appendChild(createRankingRow(work, index + 1, isComposer));
   });
   col.appendChild(list);
 
@@ -359,6 +429,7 @@ function renderRankingColumn(label, works) {
 function renderMarketExamples(query = '') {
   if (!marketExamples) return 0;
 
+  stopRankingPreview();
   marketExamples.innerHTML = '';
   const userWorks = getWorks().filter((w) => !w.isSample);
   const allWorks = [...getSampleWorks(), ...userWorks].filter((w) => matchesWorkSearch(w, query));
@@ -385,7 +456,7 @@ function renderMarketExamples(query = '') {
   }
 
   groups.forEach(({ label, works }) => {
-    marketExamples.appendChild(renderRankingColumn(label, works));
+    marketExamples.appendChild(renderRankingColumn(label, works, label === '작곡'));
   });
 
   return allWorks.length;
