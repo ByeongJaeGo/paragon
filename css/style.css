@@ -552,16 +552,52 @@ a {
 }
 
 .work-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   padding: 1.25rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  overflow: hidden;
 }
 
 .work-card.sold {
-  opacity: 0.75;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.work-card.sold .card-body {
+  opacity: 0.55;
+  filter: grayscale(0.15);
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.sold-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 8, 12, 0.52);
+  pointer-events: none;
+}
+
+.sold-overlay span {
+  padding: 0.45rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .card-top {
@@ -885,6 +921,14 @@ a {
   border-radius: 8px;
 }
 
+.lyrics-chorus-tease {
+  margin-top: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  background: rgba(76, 175, 125, 0.06);
+  border: 1px dashed rgba(76, 175, 125, 0.28);
+  border-radius: 8px;
+}
+
 .lyrics-hook-tag {
   display: inline-block;
   margin-bottom: 0.35rem;
@@ -1047,6 +1091,33 @@ fieldset legend {
 
 .role-field legend {
   margin-bottom: 0.4rem;
+}
+
+.account-section {
+  margin-top: 0.25rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.account-section-title {
+  margin: 0 0 0.25rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.account-section-desc {
+  margin: 0 0 0.85rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.profile-account {
+  margin-top: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
 }
 
 .profile-roles {

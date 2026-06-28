@@ -49,12 +49,45 @@ const SAMPLE_WORKS = [
   },
 ];
 
+function isSellerRole(roles = []) {
+  return roles.some((r) => r === 'composer' || r === 'lyricist');
+}
+
+function normalizeBankAccount(raw) {
+  if (!raw?.bankName && !raw?.accountNumber && !raw?.accountHolder) return null;
+  return {
+    bankName: raw.bankName?.trim() || '',
+    accountNumber: String(raw.accountNumber || '').replace(/\D/g, ''),
+    accountHolder: raw.accountHolder?.trim() || '',
+  };
+}
+
+function hasSellerAccount(profile) {
+  const account = profile?.bankAccount;
+  return Boolean(account?.bankName && account?.accountNumber && account?.accountHolder);
+}
+
+function formatMaskedAccount(account) {
+  if (!account?.accountNumber) return '';
+  const digits = account.accountNumber;
+  const tail = digits.slice(-4);
+  return `${account.bankName} · ${'*'.repeat(Math.max(digits.length - 4, 4))}${tail} · ${account.accountHolder}`;
+}
+
 function normalizeProfile(raw) {
   if (!raw) return null;
-  if (raw.roles?.length) return raw;
-  if (raw.role === 'buyer') return { ...raw, roles: ['vocalist'] };
-  if (raw.role) return { ...raw, roles: [raw.role] };
-  return raw;
+
+  let profile = raw;
+  if (!raw.roles?.length) {
+    if (raw.role === 'buyer') profile = { ...raw, roles: ['vocalist'] };
+    else if (raw.role) profile = { ...raw, roles: [raw.role] };
+  }
+
+  if (profile.bankAccount) {
+    profile = { ...profile, bankAccount: normalizeBankAccount(profile.bankAccount) };
+  }
+
+  return profile;
 }
 
 function getProfile() {
@@ -151,6 +184,15 @@ function pickHookLine(work, structure) {
   return lines[lines.length - 1] || '';
 }
 
+function pickChorusLines(structure, maxLines = 2) {
+  const { sections } = structure;
+  if (sections.length >= 2) return sections[1].slice(0, maxLines);
+  if (sections.length === 1 && sections[0].length > 3) {
+    return sections[0].slice(Math.floor(sections[0].length / 2), Math.floor(sections[0].length / 2) + maxLines);
+  }
+  return [];
+}
+
 function hasFullLyricsAccess(work, profile) {
   if (!work.lyrics) return false;
   if (!profile) return false;
@@ -173,9 +215,13 @@ function renderLyricsBlock(work, profile) {
   const structure = parseLyricsStructure(work.lyrics);
   const { lines, totalLines, sectionLabels } = structure;
   const tasteLines = lines.slice(0, 2);
+  const chorusLines = pickChorusLines(structure).filter((line) => !tasteLines.includes(line));
   const hookLine = pickHookLine(work, structure);
   const hookInTaste = tasteLines.includes(hookLine);
-  const hiddenCount = Math.max(totalLines - tasteLines.length - (hookInTaste ? 0 : 1), 0);
+  const hookInChorus = chorusLines.includes(hookLine);
+  const revealed = new Set([...tasteLines, ...chorusLines]);
+  if (hookLine && !hookInTaste && !hookInChorus) revealed.add(hookLine);
+  const hiddenCount = Math.max(totalLines - revealed.size, 0);
   const statsText = sectionLabels.length > 1
     ? sectionLabels.join(' · ')
     : `총 ${totalLines}줄`;
@@ -186,11 +232,20 @@ function renderLyricsBlock(work, profile) {
         <span class="lyrics-label">맛보기</span>
         <span class="lyrics-stats">${escapeHtml(statsText)}</span>
       </div>
-      <p class="lyrics-notice">도입부만 공개됩니다. 핵심과 후렴은 구매 후 확인할 수 있어요.</p>
+      <p class="lyrics-notice">도입부와 후렴 일부만 공개됩니다. 전체는 구매 후 확인할 수 있어요.</p>
       <div class="lyrics-taste">${escapeHtml(tasteLines.join('\n'))}</div>
   `;
 
-  if (hookLine && !hookInTaste) {
+  if (chorusLines.length > 0) {
+    html += `
+      <div class="lyrics-chorus-tease">
+        <span class="lyrics-hook-tag">후렴 미리보기</span>
+        <div class="lyrics-taste">${escapeHtml(chorusLines.join('\n'))}</div>
+      </div>
+    `;
+  }
+
+  if (hookLine && !hookInTaste && !hookInChorus) {
     html += `
       <div class="lyrics-hook">
         <span class="lyrics-hook-tag">핵심 한 줄</span>
@@ -202,7 +257,7 @@ function renderLyricsBlock(work, profile) {
   html += `
       <div class="lyrics-vault" aria-hidden="true">
         ${Array.from({ length: Math.min(hiddenCount, 4) }, () => '<span class="lyrics-vault-bar"></span>').join('')}
-        <p class="lyrics-vault-text">🔒 ${hiddenCount}줄 더 · 후렴·전개 포함</p>
+        <p class="lyrics-vault-text">🔒 ${hiddenCount}줄 더 · 나머지 전개 포함</p>
       </div>
       <p class="lyrics-cta">구매하면 전체 가사${work.docFileName ? ' · 문서 파일' : ''}을 열람할 수 있습니다.</p>
     </div>

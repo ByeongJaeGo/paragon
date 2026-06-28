@@ -1,6 +1,6 @@
 const UPLOAD_TYPES = {
   midi: { label: '미디작곡', title: 'midiTitle', file: 'midiFile', category: 'composer' },
-  lyricist: { label: '작사', title: 'lyricistTitle', lyrics: 'lyricistLyrics', doc: 'lyricistDoc', category: 'lyricist' },
+  lyricist: { label: '작사', title: 'lyricistTitle', doc: 'lyricistDoc', category: 'lyricist' },
 };
 
 const profileBtn = document.getElementById('profileBtn');
@@ -26,6 +26,7 @@ const mySectionTitle = document.getElementById('mySectionTitle');
 const myGrid = document.getElementById('myGrid');
 const profileAlert = document.getElementById('profileAlert');
 const profileAlertBtn = document.getElementById('profileAlertBtn');
+const accountSection = document.getElementById('accountSection');
 
 let pendingUpload = false;
 
@@ -76,7 +77,28 @@ function hasProfile() {
 }
 
 function isSeller(roles) {
-  return roles.some((r) => r === 'composer' || r === 'lyricist');
+  return isSellerRole(roles);
+}
+
+function getSelectedRoles() {
+  return Array.from(profileForm.querySelectorAll('input[name="role"]:checked')).map((input) => input.value);
+}
+
+function toggleAccountSection() {
+  if (!accountSection) return;
+
+  const show = isSeller(getSelectedRoles());
+  accountSection.classList.toggle('hidden', !show);
+
+  profileForm.bankName.required = show;
+  profileForm.accountNumber.required = show;
+  profileForm.accountHolder.required = show;
+}
+
+function fillAccountFields(profile) {
+  profileForm.bankName.value = profile?.bankAccount?.bankName || '';
+  profileForm.accountNumber.value = profile?.bankAccount?.accountNumber || '';
+  profileForm.accountHolder.value = profile?.bankAccount?.accountHolder || '';
 }
 
 function getRolesLabel(roles) {
@@ -104,7 +126,11 @@ function openProfileModal() {
     profileForm.querySelectorAll('input[name="role"]').forEach((input) => {
       input.checked = profile.roles.includes(input.value);
     });
+    fillAccountFields(profile);
+  } else {
+    fillAccountFields(null);
   }
+  toggleAccountSection();
   openModal(profileModal);
 }
 
@@ -124,7 +150,7 @@ function switchUploadPanel(type) {
   uploadForm.midiTitle.required = midiActive;
   uploadForm.midiFile.required = midiActive;
   uploadForm.lyricistTitle.required = lyricActive;
-  uploadForm.lyricistLyrics.required = lyricActive;
+  uploadForm.lyricistDoc.required = lyricActive;
 }
 
 function resetUploadForm() {
@@ -150,6 +176,13 @@ function openUploadModal() {
     return;
   }
 
+  const profile = getProfile();
+  if (isSeller(profile.roles) && !hasSellerAccount(profile)) {
+    showToast('판매자 계좌 정보를 먼저 입력해 주세요.');
+    openProfileModal();
+    return;
+  }
+
   resetUploadForm();
   openModal(uploadModal);
 }
@@ -157,6 +190,15 @@ function openUploadModal() {
 function closeUploadModal() {
   closeModal(uploadModal);
   resetUploadForm();
+}
+
+function readTextFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file, 'UTF-8');
+  });
 }
 
 function createWorkCard(work, mode) {
@@ -167,7 +209,8 @@ function createWorkCard(work, mode) {
 
   card.className = `work-card${isSold ? ' sold' : ''}${work.isSample ? ' sample' : ''}`;
 
-  let body = `
+  let body = '<div class="card-body">';
+  body += `
     <div class="card-top">
       <span class="type">${getCategoryLabel(work)}</span>
       ${work.isSample ? '<span class="badge sample-badge">예시</span>' : ''}
@@ -218,6 +261,12 @@ function createWorkCard(work, mode) {
         <button type="button" class="btn btn-outline inquiry-btn" data-id="${work.id}">문의하기</button>
       </div>
     `;
+  }
+
+  body += '</div>';
+
+  if (isSold) {
+    body += '<div class="sold-overlay" aria-hidden="true"><span>판매 완료</span></div>';
   }
 
   card.innerHTML = body;
@@ -358,6 +407,11 @@ function renderUI() {
     profileCard.innerHTML = `
       <p><strong>${escapeHtml(profile.nickname)}</strong> · ${escapeHtml(profile.genre)}</p>
       <p class="profile-roles">${escapeHtml(getRolesLabel(profile.roles))}</p>
+      ${isSeller(profile.roles) && hasSellerAccount(profile)
+        ? `<p class="profile-account">정산 계좌 · ${escapeHtml(formatMaskedAccount(profile.bankAccount))}</p>`
+        : isSeller(profile.roles)
+          ? '<p class="profile-account">정산 계좌 · 등록 필요</p>'
+          : ''}
       <p class="profile-hint">${hints.join(' ')}</p>
     `;
     uploadBtn.classList.remove('hidden');
@@ -408,6 +462,14 @@ uploadBtnHero.addEventListener('click', openUploadModal);
 profileModalClose.addEventListener('click', closeProfileModal);
 uploadModalClose.addEventListener('click', closeUploadModal);
 
+profileForm.querySelectorAll('input[name="role"]').forEach((input) => {
+  input.addEventListener('change', toggleAccountSection);
+});
+
+profileForm.accountNumber?.addEventListener('input', () => {
+  profileForm.accountNumber.value = profileForm.accountNumber.value.replace(/\D/g, '');
+});
+
 uploadForm.querySelectorAll('input[name="uploadType"]').forEach((radio) => {
   radio.addEventListener('change', () => switchUploadPanel(radio.value));
 });
@@ -430,16 +492,44 @@ profileForm.addEventListener('submit', (e) => {
 
   const nickname = profileForm.nickname.value.trim();
   const genre = profileForm.genre.value;
-  const roleInputs = profileForm.querySelectorAll('input[name="role"]:checked');
+  const roles = getSelectedRoles();
 
-  if (roleInputs.length === 0) {
+  if (roles.length === 0) {
     alert('역할(작곡·작사·가수)을 하나 이상 선택해 주세요.');
     return;
   }
 
-  const roles = Array.from(roleInputs).map((input) => input.value);
+  const profile = {
+    nickname,
+    genre,
+    roles,
+    updatedAt: new Date().toISOString(),
+  };
 
-  saveProfile({ nickname, genre, roles, updatedAt: new Date().toISOString() });
+  if (isSeller(roles)) {
+    const bankAccount = normalizeBankAccount({
+      bankName: profileForm.bankName.value,
+      accountNumber: profileForm.accountNumber.value,
+      accountHolder: profileForm.accountHolder.value,
+    });
+
+    if (!bankAccount?.bankName) {
+      alert('은행을 선택해 주세요.');
+      return;
+    }
+    if (!bankAccount.accountNumber || bankAccount.accountNumber.length < 10) {
+      alert('계좌번호를 10자리 이상 입력해 주세요.');
+      return;
+    }
+    if (!bankAccount.accountHolder) {
+      alert('예금주 이름을 입력해 주세요.');
+      return;
+    }
+
+    profile.bankAccount = bankAccount;
+  }
+
+  saveProfile(profile);
   showToast(`${nickname}님, 프로필이 저장되었습니다.`);
   renderUI();
   closeProfileModal(false);
@@ -450,11 +540,17 @@ profileForm.addEventListener('submit', (e) => {
   }
 });
 
-uploadForm.addEventListener('submit', (e) => {
+uploadForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const profile = getProfile();
   if (!profile) return;
+
+  if (isSeller(profile.roles) && !hasSellerAccount(profile)) {
+    alert('판매자 계좌 정보를 프로필에 먼저 등록해 주세요.');
+    openProfileModal();
+    return;
+  }
 
   const type = uploadForm.uploadType.value;
   const config = UPLOAD_TYPES[type];
@@ -503,7 +599,6 @@ uploadForm.addEventListener('submit', (e) => {
 
   if (type === 'lyricist') {
     const titleValue = uploadForm.lyricistTitle.value.trim();
-    const lyrics = uploadForm.lyricistLyrics.value.trim();
     const desc = uploadForm.lyricistDesc.value.trim();
     const hook = uploadForm.lyricistHook.value.trim();
     const doc = uploadForm.lyricistDoc.files[0];
@@ -512,17 +607,26 @@ uploadForm.addEventListener('submit', (e) => {
       alert('작품 제목을 입력해 주세요.');
       return;
     }
-    if (!lyrics) {
-      alert('가사를 입력해 주세요.');
+    if (!doc) {
+      alert('가사 문서 파일을 선택해 주세요.');
       return;
     }
 
     work.title = titleValue;
-    work.lyrics = lyrics;
     work.note = desc || null;
     work.hookLine = hook || null;
     work.type = 'lyricist';
-    if (doc) work.docFileName = doc.name;
+    work.docFileName = doc.name;
+
+    if (doc.name.toLowerCase().endsWith('.txt')) {
+      try {
+        const lyrics = (await readTextFile(doc)).trim();
+        if (lyrics) work.lyrics = lyrics;
+      } catch {
+        alert('가사 파일을 읽지 못했습니다. TXT 파일을 다시 선택해 주세요.');
+        return;
+      }
+    }
   }
 
   const works = getWorks();
