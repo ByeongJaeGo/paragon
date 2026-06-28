@@ -998,8 +998,70 @@ a {
 .footer {
   border-top: 1px solid var(--border);
   padding: 1.5rem 0;
-  text-align: center;
   color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.footer-links a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: var(--accent);
+}
+
+.ad-wrap {
+  display: none;
+  margin: 1.5rem 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+
+.adsense-enabled .ad-wrap {
+  display: block;
+}
+
+.ad-slot {
+  display: block;
+  min-height: 90px;
+}
+
+.legal-page .legal-body {
+  margin-top: 1.5rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.legal-page h2 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.legal-page ul {
+  padding-left: 1.25rem;
+}
+
+.legal-page a {
+  color: var(--accent);
+}
+
+.legal-updated {
+  margin-top: 2rem;
   font-size: 0.85rem;
 }
 
