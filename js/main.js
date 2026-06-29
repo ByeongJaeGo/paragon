@@ -431,10 +431,9 @@ function renderMarketExamples(query = '') {
 
   stopRankingPreview();
   marketExamples.innerHTML = '';
-  const userWorks = getWorks().filter((w) => !w.isSample);
-  const allWorks = [...getSampleWorks(), ...userWorks].filter((w) => matchesWorkSearch(w, query));
-  const composerWorks = sortWorksByLatest(allWorks.filter((w) => w.category === 'composer'));
-  const lyricistWorks = sortWorksByLatest(allWorks.filter((w) => isLyricWork(w)));
+  const publicWorks = getSampleWorks().filter((w) => matchesWorkSearch(w, query));
+  const composerWorks = sortWorksByLatest(publicWorks.filter((w) => w.category === 'composer'));
+  const lyricistWorks = sortWorksByLatest(publicWorks.filter((w) => isLyricWork(w)));
   const groups = [
     { label: '작곡', works: composerWorks },
     { label: '작사', works: lyricistWorks },
@@ -459,21 +458,18 @@ function renderMarketExamples(query = '') {
     marketExamples.appendChild(renderRankingColumn(label, works, label === '작곡'));
   });
 
-  return allWorks.length;
+  return publicWorks.length;
 }
 
 function renderMarket(query = '') {
-  const userWorks = getWorks().filter((w) => !w.isSample);
   const matchCount = renderMarketExamples(query);
   const sampleAvailable = getSampleWorks().filter((w) => w.status === 'available').length;
-  const available = userWorks.filter((w) => w.status === 'available').length;
   const q = query.trim();
 
   if (q) {
     marketCount.textContent = `"${q}" 검색 결과 ${matchCount}개`;
   } else {
-    const total = getSampleWorks().length + userWorks.length;
-    marketCount.textContent = `등록 ${total}개 · 판매 중 ${available + sampleAvailable}개`;
+    marketCount.textContent = `마켓 ${getSampleWorks().length}개 · 판매 중 ${sampleAvailable}개`;
   }
 }
 
@@ -488,15 +484,13 @@ function renderUI() {
     uploadBtn.classList.remove('hidden');
 
     mySection.classList.remove('hidden');
-    mySectionTitle.textContent = '내 등록 · 구매';
+    mySectionTitle.textContent = '내 등록';
 
     myGrid.innerHTML = '';
-    const myWorks = works.filter(
-      (w) => w.seller === profile.nickname || w.buyer === profile.nickname
-    );
+    const myWorks = works.filter((w) => w.seller === profile.nickname);
 
     if (myWorks.length === 0) {
-      myGrid.innerHTML = '<p class="empty-state">아직 등록하거나 구매한 작품이 없습니다.</p>';
+      myGrid.innerHTML = '<p class="empty-state">아직 등록한 작품이 없습니다. 작품 올리기에서 추가해 보세요.</p>';
     } else {
       myWorks.slice().reverse().forEach((work) => {
         myGrid.appendChild(createWorkCard(work, 'mine'));
@@ -609,9 +603,9 @@ uploadForm.addEventListener('submit', async (e) => {
 
   const type = uploadForm.uploadType.value;
   const config = UPLOAD_TYPES[type];
-  const price = Number(uploadForm.price.value);
+  const price = Math.round(Number(uploadForm.price.value));
 
-  if (price < 1000) {
+  if (!Number.isFinite(price) || price < 1000) {
     alert('판매 가격은 1,000원 이상 입력해 주세요.');
     return;
   }
