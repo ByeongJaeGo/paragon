@@ -215,7 +215,7 @@
     <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle">
       <button class="modal-close" id="uploadModalClose" type="button" aria-label="닫기">&times;</button>
       <h2 class="modal-title" id="uploadModalTitle">작품 올리기</h2>
-      <p class="modal-desc">업로드 유형을 선택하고 파일을 등록하세요</p>
+      <p class="modal-desc" id="uploadModalDesc">업로드 유형을 선택하고 파일을 등록하세요</p>
       <form class="modal-form" id="uploadForm">
         <fieldset class="form-field upload-type-field">
           <legend class="form-label">유형</legend>
@@ -325,7 +325,7 @@
           </label>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-full">업로드하기</button>
+        <button type="submit" class="btn btn-primary btn-full" id="uploadSubmitBtn">업로드하기</button>
       </form>
     </div>
   </div>

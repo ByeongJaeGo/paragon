@@ -24,9 +24,13 @@ const profileAlertBtn = document.getElementById('profileAlertBtn');
 const workDetailModal = document.getElementById('workDetailModal');
 const workDetailClose = document.getElementById('workDetailClose');
 const workDetailContent = document.getElementById('workDetailContent');
+const uploadModalTitle = document.getElementById('uploadModalTitle');
+const uploadModalDesc = document.getElementById('uploadModalDesc');
+const uploadSubmitBtn = document.getElementById('uploadSubmitBtn');
 
 let pendingUpload = false;
 let activeDetailWork = null;
+let editingWorkId = null;
 
 function showToast(message, type = 'default') {
   const container = document.getElementById('toastContainer');
@@ -130,7 +134,22 @@ function switchUploadPanel(type) {
   uploadForm.lyricistDoc.required = lyricActive;
 }
 
+function setUploadModalMode(mode) {
+  if (!uploadModalTitle || !uploadModalDesc || !uploadSubmitBtn) return;
+  if (mode === 'edit') {
+    uploadModalTitle.textContent = '작품 수정하기';
+    uploadModalDesc.textContent = '변경할 내용을 수정하세요. 파일은 바꿀 때만 다시 선택하면 됩니다.';
+    uploadSubmitBtn.textContent = '수정 저장';
+  } else {
+    uploadModalTitle.textContent = '작품 올리기';
+    uploadModalDesc.textContent = '업로드 유형을 선택하고 파일을 등록하세요';
+    uploadSubmitBtn.textContent = '업로드하기';
+  }
+}
+
 function resetUploadForm() {
+  editingWorkId = null;
+  setUploadModalMode('create');
   uploadForm.reset();
   uploadForm.querySelectorAll('[data-file-name]').forEach((el) => {
     el.textContent = '';
@@ -144,6 +163,66 @@ function resetUploadForm() {
   uploadForm.querySelector('input[name="uploadType"][value="midi"]').checked = true;
   switchUploadPanel('midi');
   fillUploadAccountFields(getProfile());
+}
+
+function canEditWork(work) {
+  const profile = getProfile();
+  if (!profile || work.isSample || work.status === 'sold') return false;
+  if (work.seller !== profile.nickname) return false;
+  return getWorks().some((w) => w.id === work.id);
+}
+
+function fillUploadFormForEdit(work) {
+  const type = work.uploadType || (work.category === 'composer' ? 'midi' : 'lyricist');
+
+  uploadForm.querySelector(`input[name="uploadType"][value="${type}"]`).checked = true;
+  switchUploadPanel(type);
+  uploadForm.querySelectorAll('input[name="uploadType"]').forEach((input) => {
+    input.disabled = true;
+  });
+
+  uploadForm.price.value = work.price;
+
+  if (type === 'midi') {
+    uploadForm.midiTitle.value = work.title || '';
+    uploadForm.midiBpm.value = work.bpm || '';
+    uploadForm.midiDesc.value = work.note || '';
+    uploadForm.midiFile.required = false;
+    if (work.fileName) {
+      const nameEl = uploadForm.midiFile.closest('.file-upload')?.querySelector('[data-file-name]');
+      if (nameEl) nameEl.textContent = `${work.fileName} (현재 파일)`;
+    }
+  } else {
+    uploadForm.lyricistTitle.value = work.title || '';
+    uploadForm.lyricistDesc.value = work.note || '';
+    uploadForm.lyricistHook.value = work.hookLine || '';
+    uploadForm.lyricistDoc.required = false;
+    if (work.docFileName) {
+      const nameEl = uploadForm.lyricistDoc.closest('.file-upload')?.querySelector('[data-file-name]');
+      if (nameEl) nameEl.textContent = `${work.docFileName} (현재 파일)`;
+    }
+  }
+
+  fillUploadAccountFields(getProfile());
+  setUploadModalMode('edit');
+}
+
+function openEditWorkModal(work) {
+  if (!hasProfile()) {
+    showProfileNotice();
+    openProfileModal();
+    return;
+  }
+  if (!canEditWork(work)) {
+    showToast('수정할 수 없는 작품입니다.');
+    return;
+  }
+
+  closeWorkDetailModal();
+  resetUploadForm();
+  editingWorkId = work.id;
+  fillUploadFormForEdit(work);
+  openModal(uploadModal);
 }
 
 function fillUploadAccountFields(profile) {
@@ -419,6 +498,13 @@ function buildWorkDetailHtml(work) {
 
   if (isSold) {
     html += '<p class="form-hint work-detail-note">판매가 완료된 작품입니다.</p>';
+  } else if (isOwn && canEditWork(work)) {
+    html += `
+      <div class="work-detail-footer">
+        <p class="form-hint work-detail-note">내가 등록한 작품입니다.</p>
+        <button type="button" class="btn btn-primary btn-full" id="workDetailEditBtn">수정하기</button>
+      </div>
+    `;
   } else if (isOwn) {
     html += '<p class="form-hint work-detail-note">내가 등록한 작품입니다.</p>';
   } else {
@@ -442,6 +528,10 @@ function bindWorkDetailActions(work) {
 
   workDetailContent.querySelector('#workDetailBuyBtn')?.addEventListener('click', () => {
     goToPayment(work.id);
+  });
+
+  workDetailContent.querySelector('#workDetailEditBtn')?.addEventListener('click', () => {
+    openEditWorkModal(work);
   });
 
   workDetailContent.querySelector('#workDetailChatBtn')?.addEventListener('click', () => {
@@ -662,6 +752,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if (profileModal.classList.contains('open')) closeProfileModal();
   if (uploadModal.classList.contains('open')) closeUploadModal();
+  if (workDetailModal?.classList.contains('open')) closeWorkDetailModal();
 });
 
 profileForm.addEventListener('submit', (e) => {
@@ -727,17 +818,35 @@ uploadForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  const work = {
-    id: crypto.randomUUID(),
-    uploadType: type,
-    category: config.category,
-    seller: profile.nickname,
-    genre: profile.genre,
-    price,
-    status: 'available',
-    buyer: null,
-    createdAt: new Date().toISOString(),
-  };
+  const isEdit = Boolean(editingWorkId);
+  const works = getWorks();
+  const editIndex = isEdit ? works.findIndex((w) => w.id === editingWorkId) : -1;
+
+  if (isEdit && editIndex === -1) {
+    alert('수정할 작품을 찾을 수 없습니다.');
+    closeUploadModal();
+    return;
+  }
+
+  const existing = isEdit ? works[editIndex] : null;
+  if (isEdit && (existing.seller !== profile.nickname || existing.status === 'sold')) {
+    alert('수정할 수 없는 작품입니다.');
+    return;
+  }
+
+  const work = isEdit
+    ? { ...existing, price, genre: profile.genre, updatedAt: new Date().toISOString() }
+    : {
+        id: crypto.randomUUID(),
+        uploadType: type,
+        category: config.category,
+        seller: profile.nickname,
+        genre: profile.genre,
+        price,
+        status: 'available',
+        buyer: null,
+        createdAt: new Date().toISOString(),
+      };
 
   if (type === 'midi') {
     const titleValue = uploadForm.midiTitle.value.trim();
@@ -749,7 +858,7 @@ uploadForm.addEventListener('submit', async (e) => {
       alert('작품 제목을 입력해 주세요.');
       return;
     }
-    if (!fileValue) {
+    if (!isEdit && !fileValue) {
       alert('WAV 파일을 선택해 주세요.');
       return;
     }
@@ -759,7 +868,7 @@ uploadForm.addEventListener('submit', async (e) => {
     }
 
     work.title = titleValue;
-    work.fileName = fileValue.name;
+    if (fileValue) work.fileName = fileValue.name;
     work.bpm = bpm || null;
     work.note = desc || null;
   }
@@ -774,7 +883,7 @@ uploadForm.addEventListener('submit', async (e) => {
       alert('작품 제목을 입력해 주세요.');
       return;
     }
-    if (!doc) {
+    if (!isEdit && !doc) {
       alert('가사 문서 파일을 선택해 주세요.');
       return;
     }
@@ -783,24 +892,30 @@ uploadForm.addEventListener('submit', async (e) => {
     work.note = desc || null;
     work.hookLine = hook || null;
     work.type = 'lyricist';
-    work.docFileName = doc.name;
-
-    if (doc.name.toLowerCase().endsWith('.txt')) {
-      try {
-        const lyrics = (await readTextFile(doc)).trim();
-        if (lyrics) work.lyrics = lyrics;
-      } catch {
-        alert('가사 파일을 읽지 못했습니다. TXT 파일을 다시 선택해 주세요.');
-        return;
+    if (doc) {
+      work.docFileName = doc.name;
+      if (doc.name.toLowerCase().endsWith('.txt')) {
+        try {
+          const lyrics = (await readTextFile(doc)).trim();
+          if (lyrics) work.lyrics = lyrics;
+        } catch {
+          alert('가사 파일을 읽지 못했습니다. TXT 파일을 다시 선택해 주세요.');
+          return;
+        }
       }
     }
   }
 
-  const works = getWorks();
-  works.push(work);
-  saveWorks(works);
+  if (isEdit) {
+    works[editIndex] = work;
+    saveWorks(works);
+    showToast(`"${work.title}" 작품이 수정되었습니다.`);
+  } else {
+    works.push(work);
+    saveWorks(works);
+    showToast(`[${config.label}] "${work.title}" (${formatPrice(price)}) 업로드 완료`);
+  }
 
-  showToast(`[${config.label}] "${work.title}" (${formatPrice(price)}) 업로드 완료`);
   renderUI();
   closeUploadModal();
 });
