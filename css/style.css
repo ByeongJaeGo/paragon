@@ -1452,6 +1452,20 @@ a {
   margin: 0.75rem 0 0;
 }
 
+.work-detail-footer {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.work-detail-footer .btn-primary {
+  font-size: 1rem;
+  padding: 0.85rem 1rem;
+}
+
 .work-detail-actions {
   display: flex;
   flex-direction: column;

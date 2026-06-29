@@ -284,7 +284,10 @@ function bindCardActions(container) {
 
 function goToPayment(workId) {
   const work = findWork(workId);
-  if (!work || work.status === 'sold') return;
+  if (!work || work.status === 'sold') {
+    showToast('이미 판매된 작품입니다.');
+    return;
+  }
 
   const profile = getProfile();
   if (profile && work.seller === profile.nickname) {
@@ -292,6 +295,8 @@ function goToPayment(workId) {
     return;
   }
 
+  stopRankingPreview();
+  closeWorkDetailModal();
   window.location.href = `payment.html?workId=${encodeURIComponent(workId)}`;
 }
 
@@ -412,17 +417,18 @@ function buildWorkDetailHtml(work) {
     html += `<div class="work-detail-lyrics">${renderLyricsBlock(work, profile)}</div>`;
   }
 
-  if (work.isSample) {
-    html += '<p class="form-hint work-detail-note">테스트용 예시 작품입니다. 실제 구매·다운로드는 되지 않습니다.</p>';
-  } else if (!isSold && !isOwn) {
-    html += `
-      <div class="work-detail-actions">
-        <button type="button" class="btn btn-primary btn-full" id="workDetailBuyBtn">구매하기</button>
-        <button type="button" class="btn btn-outline btn-full" id="workDetailChatBtn">문의하기</button>
-      </div>
-    `;
+  if (isSold) {
+    html += '<p class="form-hint work-detail-note">판매가 완료된 작품입니다.</p>';
   } else if (isOwn) {
     html += '<p class="form-hint work-detail-note">내가 등록한 작품입니다.</p>';
+  } else {
+    html += `
+      <div class="work-detail-footer">
+        ${work.isSample ? '<p class="form-hint work-detail-note">예시 작품 데모 결제 흐름을 체험할 수 있습니다.</p>' : ''}
+        <button type="button" class="btn btn-primary btn-full" id="workDetailBuyBtn">${formatPrice(work.price)} 구매하기</button>
+        ${!work.isSample ? '<button type="button" class="btn btn-outline btn-full" id="workDetailChatBtn">문의하기</button>' : ''}
+      </div>
+    `;
   }
 
   return html;
@@ -435,11 +441,6 @@ function bindWorkDetailActions(work) {
   });
 
   workDetailContent.querySelector('#workDetailBuyBtn')?.addEventListener('click', () => {
-    if (work.isSample) {
-      alert('테스트용 예시 작품입니다.\n실제 구매·다운로드는 되지 않습니다.');
-      return;
-    }
-    closeWorkDetailModal();
     goToPayment(work.id);
   });
 
