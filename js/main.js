@@ -21,8 +21,12 @@ const mySectionTitle = document.getElementById('mySectionTitle');
 const myGrid = document.getElementById('myGrid');
 const profileAlert = document.getElementById('profileAlert');
 const profileAlertBtn = document.getElementById('profileAlertBtn');
+const workDetailModal = document.getElementById('workDetailModal');
+const workDetailClose = document.getElementById('workDetailClose');
+const workDetailContent = document.getElementById('workDetailContent');
 
 let pendingUpload = false;
+let activeDetailWork = null;
 
 function showToast(message, type = 'default') {
   const container = document.getElementById('toastContainer');
@@ -248,6 +252,24 @@ function createWorkCard(work, mode) {
   }
 
   card.innerHTML = body;
+
+  if (mode === 'mine') {
+    card.classList.add('work-card-clickable');
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `${work.title} 상세 보기`);
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('button, a, audio, input, textarea, select')) return;
+      openWorkDetailModal(work);
+    });
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openWorkDetailModal(work);
+      }
+    });
+  }
+
   return card;
 }
 
@@ -313,7 +335,7 @@ function stopRankingPreview() {
   }
   if (activeRankingPreviewBtn) {
     activeRankingPreviewBtn.classList.remove('playing');
-    activeRankingPreviewBtn.textContent = '30초';
+    activeRankingPreviewBtn.textContent = activeRankingPreviewBtn.dataset.previewLabel || '30초';
     activeRankingPreviewBtn.setAttribute('aria-label', '30초 미리듣기');
     activeRankingPreviewBtn = null;
   }
@@ -333,6 +355,10 @@ function playRankingPreview(work, btn) {
 
   stopRankingPreview();
 
+  if (!btn.dataset.previewLabel) {
+    btn.dataset.previewLabel = btn.textContent.trim();
+  }
+
   rankingPreviewAudio = rankingPreviewAudio || new Audio();
   rankingPreviewAudio.src = url;
   rankingPreviewAudio.currentTime = 0;
@@ -350,12 +376,97 @@ function playRankingPreview(work, btn) {
   rankingPreviewTimer = setTimeout(stopRankingPreview, RANKING_PREVIEW_SECONDS * 1000);
 }
 
-function handleRankingClick(work) {
-  if (work.isSample) {
-    alert('테스트용 예시 작품입니다.\n실제 구매·다운로드는 되지 않습니다.');
-    return;
+function buildWorkDetailHtml(work) {
+  const profile = getProfile();
+  const isSold = work.status === 'sold';
+  const isOwn = profile?.nickname === work.seller;
+
+  let html = `
+    <p class="page-tag">${escapeHtml(getCategoryLabel(work))}</p>
+    <h2 class="modal-title" id="workDetailTitle">${escapeHtml(work.title)}</h2>
+    <div class="work-detail-meta">
+      <span class="badge ${isSold ? 'sold-badge' : 'on-sale'}">${isSold ? '판매 완료' : '판매 중'}</span>
+      ${work.isSample ? '<span class="badge sample-badge">예시</span>' : ''}
+    </div>
+    <dl class="work-detail-list">
+      <div><dt>판매자</dt><dd>${escapeHtml(work.seller)}</dd></div>
+      ${work.genre ? `<div><dt>장르</dt><dd>${escapeHtml(work.genre)}</dd></div>` : ''}
+      <div><dt>가격</dt><dd>${formatPrice(work.price)}</dd></div>
+      ${work.bpm ? `<div><dt>BPM</dt><dd>${work.bpm}</dd></div>` : ''}
+      ${work.note ? `<div><dt>분위기</dt><dd>${escapeHtml(work.note)}</dd></div>` : ''}
+      ${work.fileName ? `<div><dt>파일</dt><dd>${escapeHtml(work.fileName)}</dd></div>` : ''}
+      ${work.docFileName ? `<div><dt>문서</dt><dd>${escapeHtml(work.docFileName)}</dd></div>` : ''}
+      <div><dt>등록일</dt><dd>${formatDate(work.createdAt)}</dd></div>
+      ${isSold && work.buyer ? `<div><dt>구매자</dt><dd>${escapeHtml(work.buyer)}</dd></div>` : ''}
+      ${isSold && work.settlement && isOwn
+        ? `<div><dt>정산</dt><dd>${formatPrice(work.settlement.sellerPayout)} (수수료 ${formatPrice(work.settlement.platformFee)})</dd></div>`
+        : ''}
+    </dl>
+  `;
+
+  if (work.category === 'composer' && getWorkPreviewUrl(work)) {
+    html += '<button type="button" class="btn btn-outline btn-full" id="workDetailPreviewBtn">30초 미리듣기</button>';
   }
-  goToPayment(work.id);
+
+  if (work.lyrics) {
+    html += `<div class="work-detail-lyrics">${renderLyricsBlock(work, profile)}</div>`;
+  }
+
+  if (work.isSample) {
+    html += '<p class="form-hint work-detail-note">테스트용 예시 작품입니다. 실제 구매·다운로드는 되지 않습니다.</p>';
+  } else if (!isSold && !isOwn) {
+    html += `
+      <div class="work-detail-actions">
+        <button type="button" class="btn btn-primary btn-full" id="workDetailBuyBtn">구매하기</button>
+        <button type="button" class="btn btn-outline btn-full" id="workDetailChatBtn">문의하기</button>
+      </div>
+    `;
+  } else if (isOwn) {
+    html += '<p class="form-hint work-detail-note">내가 등록한 작품입니다.</p>';
+  }
+
+  return html;
+}
+
+function bindWorkDetailActions(work) {
+  workDetailContent.querySelector('#workDetailPreviewBtn')?.addEventListener('click', (e) => {
+    const btn = e.currentTarget;
+    playRankingPreview(work, btn);
+  });
+
+  workDetailContent.querySelector('#workDetailBuyBtn')?.addEventListener('click', () => {
+    if (work.isSample) {
+      alert('테스트용 예시 작품입니다.\n실제 구매·다운로드는 되지 않습니다.');
+      return;
+    }
+    closeWorkDetailModal();
+    goToPayment(work.id);
+  });
+
+  workDetailContent.querySelector('#workDetailChatBtn')?.addEventListener('click', () => {
+    closeWorkDetailModal();
+    goToChat(work.id);
+  });
+}
+
+function openWorkDetailModal(work) {
+  if (!workDetailModal || !workDetailContent) return;
+  activeDetailWork = work;
+  workDetailContent.innerHTML = buildWorkDetailHtml(work);
+  bindWorkDetailActions(work);
+  openModal(workDetailModal);
+}
+
+function closeWorkDetailModal() {
+  if (!workDetailModal) return;
+  stopRankingPreview();
+  closeModal(workDetailModal);
+  workDetailContent.innerHTML = '';
+  activeDetailWork = null;
+}
+
+function handleRankingClick(work) {
+  openWorkDetailModal(work);
 }
 
 function createRankingRow(work, rank, isComposer = false) {
@@ -387,19 +498,20 @@ function createRankingRow(work, rank, isComposer = false) {
     playRankingPreview(work, previewButton);
   });
 
-  if (!isSold) {
-    row.classList.add('rank-clickable');
-    row.tabIndex = 0;
-    row.setAttribute('role', 'button');
-    row.setAttribute('aria-label', `${work.title} ${formatPrice(work.price)}`);
-    row.addEventListener('click', () => handleRankingClick(work));
-    row.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        handleRankingClick(work);
-      }
-    });
-  }
+  row.classList.add('rank-clickable');
+  row.tabIndex = 0;
+  row.setAttribute('role', 'button');
+  row.setAttribute('aria-label', `${work.title} 상세 보기`);
+  row.addEventListener('click', (e) => {
+    if (e.target.closest('.rank-preview-btn')) return;
+    handleRankingClick(work);
+  });
+  row.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleRankingClick(work);
+    }
+  });
 
   return row;
 }
@@ -525,6 +637,10 @@ uploadBtn.addEventListener('click', openUploadModal);
 uploadBtnHero.addEventListener('click', openUploadModal);
 profileModalClose.addEventListener('click', closeProfileModal);
 uploadModalClose.addEventListener('click', closeUploadModal);
+workDetailClose?.addEventListener('click', closeWorkDetailModal);
+workDetailModal?.addEventListener('click', (e) => {
+  if (e.target === workDetailModal) closeWorkDetailModal();
+});
 
 uploadForm.uploadAccountNumber?.addEventListener('input', () => {
   uploadForm.uploadAccountNumber.value = uploadForm.uploadAccountNumber.value.replace(/\D/g, '');
