@@ -60,6 +60,14 @@ a {
   color: var(--accent);
 }
 
+.logo-ko {
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--text-muted);
+  margin-left: 0.35rem;
+}
+
 .nav-actions {
   display: flex;
   gap: 0.5rem;
