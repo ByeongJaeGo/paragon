@@ -10,4 +10,4 @@
 const SITE_URL = 'https://paragon-inky.vercel.app';
 
 /** 네이버 서치어드바이저 HTML 인증 코드 (발급 후 입력) */
-const NAVER_SITE_VERIFICATION = '';
+const NAVER_SITE_VERIFICATION = '17e03662483b4eb7771cbba8d2c351b5e7cc262c';
