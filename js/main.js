@@ -567,6 +567,9 @@ function createRankingRow(work, rank, isComposer = false) {
   const genreTag = work.genre
     ? `<span class="rank-genre">${escapeHtml(work.genre)}</span>`
     : '';
+  const summaryTag = !isComposer && getLyricSummary(work)
+    ? `<span class="rank-summary" title="${escapeHtml(getLyricSummary(work))}">${escapeHtml(getLyricSummary(work))}</span>`
+    : '';
   const previewBtn = isComposer && getWorkPreviewUrl(work)
     ? `<button type="button" class="rank-preview-btn" aria-label="30초 미리듣기">30초</button>`
     : '';
@@ -578,6 +581,7 @@ function createRankingRow(work, rank, isComposer = false) {
       ${previewBtn}
       <span class="rank-title" title="${escapeHtml(work.title)}">${escapeHtml(work.title)}</span>
       ${genreTag}
+      ${summaryTag}
     </span>
     <span class="rank-price">${formatPrice(work.price)}</span>
     <span class="rank-bpm">${bpmLabel}</span>
@@ -615,7 +619,7 @@ function renderRankingColumn(label, works, isComposer = false) {
   head.className = 'market-ranking-head';
   head.innerHTML = `
     <span class="market-ranking-label">${label}</span>
-    <span class="market-ranking-meta">${isComposer ? '30초 · 제목 · 장르 · 가격 · BPM' : '제목 · 장르 · 가격 · BPM'} · 최신순</span>
+    <span class="market-ranking-meta">${isComposer ? '30초 · 제목 · 장르 · 가격 · BPM' : '제목 · 장르 · 한줄요약 · 가격'} · 최신순</span>
   `;
   col.appendChild(head);
 

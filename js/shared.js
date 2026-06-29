@@ -323,6 +323,14 @@ function isLyricWork(work) {
   return work.category === 'lyricist' || work.uploadType === 'lyricist' || work.type === 'lyricist';
 }
 
+function getLyricSummary(work) {
+  if (!isLyricWork(work)) return '';
+  if (work.hookLine?.trim()) return work.hookLine.trim();
+  if (work.note?.trim()) return work.note.trim();
+  const firstLine = work.lyrics?.split('\n').map((line) => line.trim()).find(Boolean);
+  return firstLine || '';
+}
+
 function parseLyricsStructure(lyrics) {
   const sections = lyrics
     .split(/\n\s*\n/)
