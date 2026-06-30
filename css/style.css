@@ -1348,6 +1348,55 @@ a {
   color: var(--accent);
 }
 
+.faq-section {
+  margin: 3rem 0 2rem;
+  padding: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.faq-list {
+  margin: 1.25rem 0 0;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.faq-item dt {
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.35rem;
+}
+
+.faq-item dd {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.faq-item dd a {
+  color: var(--accent);
+}
+
+.page-intro {
+  margin-bottom: 1.25rem;
+  padding-bottom: 0;
+}
+
+.page-intro p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.chat-intro {
+  margin-bottom: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
 .adsense-enabled .ad-wrap {
   display: block;
 }

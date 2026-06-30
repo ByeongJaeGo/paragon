@@ -1,5 +1,5 @@
 (function initAdSlots() {
-  /* AdSense: 콘텐츠형 가이드 글에만 광고 (결제·채팅·마켓·목록 페이지 제외) */
+  if (!window.PARAGON_ADSENSE?.showAds) return;
   if (!document.body.classList.contains('adsense-page')) return;
 
   const publisherId = window.PARAGON_ADSENSE?.publisherId?.trim();
@@ -9,9 +9,7 @@
 
   function fillSlots() {
     document.querySelectorAll('.adsbygoogle').forEach((slot) => {
-      if (!slot.dataset.adClient) {
-        slot.dataset.adClient = publisherId;
-      }
+      if (!slot.dataset.adClient) slot.dataset.adClient = publisherId;
       try {
         (window.adsbygoogle = window.adsbygoogle || []).push({});
       } catch {
