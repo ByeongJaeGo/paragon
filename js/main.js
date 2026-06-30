@@ -510,7 +510,7 @@ function buildWorkDetailHtml(work) {
   } else {
     html += `
       <div class="work-detail-footer">
-        ${work.isSample ? '<p class="form-hint work-detail-note">예시 작품 데모 결제 흐름을 체험할 수 있습니다.</p>' : ''}
+        ${work.isSample ? '<p class="form-hint work-detail-note">마켓에 등록된 예시 작품입니다. 구매 절차를 확인할 수 있습니다.</p>' : ''}
         <button type="button" class="btn btn-primary btn-full" id="workDetailBuyBtn">${formatPrice(work.price)} 구매하기</button>
         ${!work.isSample ? '<button type="button" class="btn btn-outline btn-full" id="workDetailChatBtn">문의하기</button>' : ''}
       </div>

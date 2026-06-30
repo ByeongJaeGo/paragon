@@ -1320,6 +1320,34 @@ a {
   border-radius: var(--radius);
 }
 
+.ad-wrap-article {
+  margin-top: 2rem;
+}
+
+.about-paragon {
+  margin: 3rem 0 2rem;
+  padding: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.about-paragon-body {
+  display: grid;
+  gap: 1rem;
+  max-width: 52rem;
+  color: var(--text-muted);
+  line-height: 1.75;
+}
+
+.about-paragon-body p {
+  margin: 0;
+}
+
+.about-paragon-body a {
+  color: var(--accent);
+}
+
 .adsense-enabled .ad-wrap {
   display: block;
 }

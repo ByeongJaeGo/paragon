@@ -233,7 +233,7 @@ function validateBuyerPayment(payment, payMethod) {
   if (payMethod === 'bank') {
     if (!payment.depositorName) return '입금자명을 입력해 주세요.';
   } else if (!payment.cardNumber || payment.cardNumber.length < 12) {
-    return '카드번호를 입력해 주세요. (데모 12자리 이상)';
+    return '카드번호를 12자리 이상 입력해 주세요.';
   }
   return null;
 }

@@ -53,7 +53,7 @@ if (!work) {
       saveChatMessage(workId, {
         id: crypto.randomUUID(),
         sender: work.seller,
-        text: '메시지 확인했습니다. 잠시만 기다려 주세요! (데모 자동 답장)',
+        text: '메시지 확인했습니다. 잠시만 기다려 주세요!',
         time: new Date().toISOString(),
         system: true,
       });
